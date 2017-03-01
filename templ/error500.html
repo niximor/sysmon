@@ -1,0 +1,21 @@
+{% extends "empty.html" %}
+{% block body %}
+<div class="container">
+    <div class="page-header">
+        <h1>Server Error</h1>
+    </div>
+
+    <h2>{{ get_class(error) }}</h2>
+
+    <div class="alert alert-danger">
+        {{ error.getMessage() }}
+    </div>
+
+    <h2>Stack trace</h2>
+    <ol>
+        {% for frame in error.getTrace() %}
+        <li><code>{{ frame.class }}{{ frame.type }}{{ frame.function }}({% for arg in frame.args %}{{ arg }}, {% endfor %})</code> in <strong>{{ frame.file }}</strong> on line <strong>{{ frame.line }}</strong></li>
+        {% endfor %}
+    </ol>
+</div>
+{% endblock %}

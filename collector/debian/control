@@ -1,0 +1,14 @@
+Source: gcm-sysmon-collector
+Section: admin
+Priority: optional
+Maintainer: Michal Kuchta <niximor@gmail.com>
+Build-Depends: debhelper (>=9)
+Standards-Version: 3.9.6
+Homepage: http://sysmon.gcm.cz/
+
+Package: gcm-sysmon-collector
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, python, python-requests
+Description: Sysmon collector
+ Script that collects information to the sysmon service.
+

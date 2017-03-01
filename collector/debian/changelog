@@ -1,0 +1,35 @@
+gcm-sysmon-collector (1.0.5) xenial; urgency=medium
+
+  * Correct detecting of installed packages.
+
+ -- Michal Kuchta <niximor@gmail.com>  Mon, 27 Feb 2017 08:03:52 +0100
+
+gcm-sysmon-collector (1.0.4) xenial; urgency=medium
+
+  * Added uptime collection.
+
+ -- Michal Kuchta <niximor@gmail.com>  Sat, 25 Feb 2017 21:27:49 +0100
+
+gcm-sysmon-collector (1.0.3) xenial; urgency=medium
+
+  * Fixed typo in syslog error value.
+
+ -- Michal Kuchta <niximor@gmail.com>  Sat, 25 Feb 2017 08:30:14 +0100
+
+gcm-sysmon-collector (1.0.2) xenial; urgency=medium
+
+  * Architecture is all.
+
+ -- Michal Kuchta <niximor@gmail.com>  Fri, 24 Feb 2017 10:18:54 +0100
+
+gcm-sysmon-collector (1.0.1) xenial; urgency=medium
+
+  * Updated dependencies.
+
+ -- Michal Kuchta <niximor@gmail.com>  Fri, 24 Feb 2017 09:50:42 +0100
+
+gcm-sysmon-collector (1.0.0) unstable; urgency=medium
+
+  * Initial Release.
+
+ -- Michal Kuchta <niximor@gmail.com>  Fri, 24 Feb 2017 09:23:57 +0100

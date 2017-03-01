@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hdd-o"></span> {{ host.hostname }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['HostsController', 'index']) }}">Hosts</a></li>
+    <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
+</ol>
+
+<div class="btn-group" role="group" style="margin-bottom: 1.5em">
+    <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default">Packages</a>
+    <a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" class="btn btn-default">Changelog</a>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Overview</h3>
+    </div>
+    <div class="panel-body">
+        <dl class="dl-horizontal">
+            <dt>Hostname:</dt>
+            <dd>{{ host.hostname }}</dd>
+
+            <dt>Distribution:</dt>
+            <dd>{{ host.distribution }}</dd>
+
+            <dt>Version:</dt>
+            <dd>{{ host.version }}</dd>
+
+            <dt>Kernel:</dt>
+            <dd>{{ host.kernel }}</dd>
+
+            <dt>IP:</dt>
+            <dd>{{ host.ip }} ({{ host.resolved_hostname }})</dd>
+
+            <dt>Last seen:</dt>
+            <dd>{{ host.last_seen|datetime("Y-m-d G:i:s") }}</dd>
+
+            <dt>Uptime:</dt>
+            <dd>{{ host.uptime|duration }}</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Alerts</h3>
+    </div>
+    <div class="table-reponsive">
+        <table class="panel-body table table-striped table-hover table-condensed">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for alert in alerts %}
+                    <tr class="{% if alert.active %}danger{% endif %}">
+                        <td>{{ alert.timestamp|datetime("Y-m-d H:i:s") }}</td>
+                        <td>{{ alert.getMessage() }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="2"><div class="well">Hooray, no alerts to show!</div></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

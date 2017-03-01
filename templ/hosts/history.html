@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hdd-o"></span> {{ host.hostname }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['HostsController', 'index']) }}">Hosts</a></li>
+    <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
+    <li><a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}">Changelog</a></li>
+</ol>
+
+<div class="table-responsive">
+    <table class="table table-striped table-condensed table-hover">
+        <thead>
+            <tr>
+                <th>When</th>
+                <th>Action</th>
+                <th>Message</th>
+            </tr>
+        </thead>
+
+        <tfoot>
+        </tfoot>
+
+        <tbody>
+            {% for entry in history %}
+                <tr>
+                    <td>{{ entry.timestamp|datetime("Y-m-d G:i:s") }}</td>
+                    <td>{{ entry.action }}</td>
+                    <td>{{ entry.message|raw }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="3">
+                        <div class="well">No changelog entries for given criteria.</div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

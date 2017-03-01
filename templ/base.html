@@ -1,0 +1,28 @@
+{% extends "empty.html" %}
+{% block body %}
+<nav class="navbar navbar-inverse" style="border-radius: 0">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="{{ url_for(["OverviewController", "index"]) }}">SYSmon</a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar">
+            <ul class="nav navbar-nav">
+                <li{% if controller == "OverviewController" %} class="active"{% endif %}><a href="{{ url_for(["OverviewController", "index"]) }}"><span class="fa fa-home"></span> Overview</a></li>
+                <li{% if controller == "HostsController" %} class="active"{% endif %}><a href="{{ url_for(["HostsController", "index"]) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
+                <li{% if controller == "PackagesController" %} class="active"{% endif %}><a href="{{ url_for(["PackagesController", "index"]) }}"><span class="fa fa-dropbox"></span> Packages</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    {% block main %}
+    {% endblock %}
+</div>
+{% endblock %}

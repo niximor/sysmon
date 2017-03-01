@@ -1,0 +1,3 @@
+.sorted { white-space: nowrap; display: block; }
+.sorted .fa { vertical-align: baseline; margin-left: 1em; }
+.sorted .fa.fa-sort { color: #e0e0e0; }
