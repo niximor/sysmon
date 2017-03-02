@@ -42,10 +42,10 @@
     <table class="table table-compacted table-hover table-striped">
         <thead>
             <tr>
-                <th>Stamp</th>
-                <th>Host</th>
-                <th>Last stamp</th>
-                <th>Alert period</th>
+                <th>{{ "Stamp"|sorted("stamp", true) }}</th>
+                <th>{{ "Host"|sorted("hostname") }}</th>
+                <th>{{ "Last stamp"|sorted("timestamp") }}</th>
+                <th>{{ "Alert period"|sorted("alert_after") }}</th>
             </tr>
         </thead>
 

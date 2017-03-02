@@ -27,7 +27,32 @@ class StampsController extends TemplatedController implements CronInterface {
             $query .= " WHERE ".implode(" AND ", $where);
         }
 
-        $query .= " ORDER BY `s`.`stamp` ASC";
+        $order = "`s`.`stamp`";
+
+        switch ($_REQUEST["order"] ?? "") {
+            case "stamp":
+                $order = "`s`.`stamp`";
+                break;
+
+            case "hostname":
+                $order = "`sv`.`hostname`";
+                break;
+
+            case "timestamp":
+                $order = "`s`.`timestamp`";
+                break;
+
+            case "alert_after":
+                $order = "`s`.`alert_after`";
+                break;
+        }
+
+        $direction = "ASC";
+        if (isset($_REQUEST["direction"]) && in_array($_REQUEST["direction"], ["ASC", "DESC"])) {
+            $direction = $_REQUEST["direction"];
+        }
+
+        $query .= " ORDER BY ".$order." ".$direction.", `s`.`stamp` ASC, `sv`.`hostname` ASC";
 
         $q = $db->query($query) or fail($db->error);
 
