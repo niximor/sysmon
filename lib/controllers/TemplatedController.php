@@ -2,6 +2,9 @@
 
 require_once "fastrouter/Controller.php";
 
+require_once "models/Message.php";
+require_once "models/CurrentUser.php";
+
 class TemplatedController implements \nixfw\fastrouter\Controller {
     protected $twig;
 
@@ -35,7 +38,9 @@ class TemplatedController implements \nixfw\fastrouter\Controller {
                 "request" => $_REQUEST,
                 "get" => $_GET,
                 "post" => $_POST,
-                "total_alerts_count" => $this->countAlerts()
+                "total_alerts_count" => $this->countAlerts(),
+                "messages" => Message::get(),
+                "current_user" => new CurrentUser()
             ]
         ));
     }

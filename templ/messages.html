@@ -1,0 +1,3 @@
+{% for message in messages %}
+<div class="alert alert-{{ message.getType() }}" role="alert">{{ message.text }}</div>
+{% endfor %}

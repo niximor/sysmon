@@ -8,6 +8,8 @@ require_once "lib/common.php";
 require_once "controllers/HostsController.php";
 require_once "controllers/StampsController.php";
 
+require_once "models/Session.php";
+
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 
@@ -26,6 +28,8 @@ try {
         $instance = new $module();
         $instance->cron($db);
     }
+
+    Session::cleanup();
 
     // Send XMPP alerts.
     $q = $db->query("SELECT `a`.`id`, `a`.`until`, `a`.`type`, `a`.`data`, `s`.`hostname`, `a`.`active` FROM `alerts` `a` JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`) WHERE `sent` = 0");

@@ -13,11 +13,17 @@
         </div>
         <div class="collapse navbar-collapse" id="navbar">
             <ul class="nav navbar-nav">
-                <li{% if controller == "OverviewController" %} class="active"{% endif %}><a href="{{ url_for(["OverviewController", "index"]) }}"><span class="fa fa-home"></span> Overview{% if total_alerts_count > 0 %} <span class="label label-danger" style="margin-left: 0.5em">{{ total_alerts_count }}</span>{% endif %}</a></li>
-                <li{% if controller == "HostsController" %} class="active"{% endif %}><a href="{{ url_for(["HostsController", "index"]) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
-                <li{% if controller == "PackagesController" %} class="active"{% endif %}><a href="{{ url_for(["PackagesController", "index"]) }}"><span class="fa fa-dropbox"></span> Packages</a></li>
-                <li{% if controller == "StampsController" %} class="active"{% endif %}><a href="{{ url_for(["StampsController", "index"]) }}"><span class="fa fa-heartbeat"></span> Stamps</a></li>
+                <li{% if controller == "OverviewController" %} class="active"{% endif %}><a href="{{ url_for(['OverviewController', 'index']) }}"><span class="fa fa-home"></span> Overview{% if total_alerts_count > 0 %} <span class="label label-danger" style="margin-left: 0.5em">{{ total_alerts_count }}</span>{% endif %}</a></li>
+                <li{% if controller == "HostsController" %} class="active"{% endif %}><a href="{{ url_for(['HostsController', 'index']) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
+                <li{% if controller == "PackagesController" %} class="active"{% endif %}><a href="{{ url_for(['PackagesController', 'index']) }}"><span class="fa fa-dropbox"></span> Packages</a></li>
+                <li{% if controller == "StampsController" %} class="active"{% endif %}><a href="{{ url_for(['StampsController', 'index']) }}"><span class="fa fa-heartbeat"></span> Stamps</a></li>
             </ul>
+            <div class="navbar-right">
+                <p class="navbar-text"><span class="fa fa-user-circle-o"></span> {{ current_user.username }}</p>
+                <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for(['LoginController', 'logout']) }}"><span class="fa fa-sign-out"></span> Logout</a></li>
+                </ul>
+            </div>
         </div>
     </div>
 </nav>

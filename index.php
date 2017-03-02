@@ -9,6 +9,7 @@ require_once "lib/common.php";
 
 require_once "exceptions/EntityNotFound.php";
 
+require_once "controllers/LoginController.php";
 require_once "controllers/HostsController.php";
 require_once "controllers/OverviewController.php";
 require_once "controllers/PackagesController.php";
@@ -17,15 +18,24 @@ require_once "controllers/StampsController.php";
 
 require_once "fastrouter/FastRouter.php";
 
+require_once "models/Session.php";
+
 $router = new \nixfw\fastrouter\FastRouter();
-$router->bind("/", array("OverviewController", "index"));
-$router->bind("/hosts", array("HostsController", "index"));
-$router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
-$router->bind("/hosts/<id>/history", array("HostsController", "history"));
-$router->bind("/stamps", array("StampsController", "index"));
-$router->bind("/stamps/<id>", array("StampsController", "detail"));
+
 $router->bind("/stamps/put/<hostname>/<stamp>", array("StampsController", "put"));
-$router->bind("/packages", array("PackagesController", "index"));
+
+if (Session::get("user_id")) {
+    $router->bind("/", array("OverviewController", "index"));
+    $router->bind("/hosts", array("HostsController", "index"));
+    $router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
+    $router->bind("/hosts/<id>/history", array("HostsController", "history"));
+    $router->bind("/stamps", array("StampsController", "index"));
+    $router->bind("/stamps/<id>", array("StampsController", "detail"));
+    $router->bind("/packages", array("PackagesController", "index"));
+    $router->bind("/logout", array("LoginController", "logout"));
+} else {
+    $router->bind("/", array("LoginController", "index"));
+}
 
 function twig_url_for(...$args) {
     global $router;

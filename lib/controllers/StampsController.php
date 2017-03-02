@@ -98,7 +98,7 @@ class StampsController extends TemplatedController implements CronInterface {
         }
 
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) ORDER BY `s`.`stamp` ASC") or fail($db->error);
+        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
         $a = $q->fetch_array();
 
         if (!$a) {
@@ -121,7 +121,12 @@ class StampsController extends TemplatedController implements CronInterface {
 
         $server_id = $a["id"];
 
-        $db->query("INSERT INTO `stamps` (`stamp`, `server_id`, `timestamp`) VALUES (".escape($db, $stamp).", ".escape($db, $server_id).", NOW()) ON DUPLICATE KEY UPDATE `timestamp` = VALUES(`timestamp`)") or fail($db->error);
+        $q = $db->query("SELECT `id` FROM `stamps` WHERE `server_id` = ".escape($db, $server_id)." AND `stamp` = ".escape($db, $stamp)) or fail($db->error);
+        if ($a = $q->fetch_array()) {
+            $db->query("UPDATE `stamps` SET `timestamp` = NOW() WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+        } else {
+            $db->query("INSERT INTO `stamps` (`stamp`, `server_id`, `timestamp`) VALUES (".escape($db, $stamp).", ".escape($db, $server_id).", NOW())") or fail($db->error);
+        }
 
         $q = $db->query("SELECT `id`, `data` FROM `alerts` WHERE `server_id` = ".escape($db, $server_id)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
         while ($a = $q->fetch_array()) {

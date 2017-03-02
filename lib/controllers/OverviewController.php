@@ -39,9 +39,18 @@ class OverviewController extends TemplatedController {
             $alerts[] = new Alert($a);
         }
 
+        $q = $db->query("SELECT COUNT(id) AS `stamp_total_count`, SUM(IF(DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW(), 1, 0)) AS `stamp_failed` FROM `stamps`") or fail($db->error);
+        $a = $q->fetch_array();
+
         return $this->renderTemplate("overview/index.html", [
-            "total_count" => $total_count,
-            "alert_count" => $alert_count,
+            "hosts" => [
+                "total_count" => $total_count,
+                "alert_count" => $alert_count,
+            ],
+            "stamps" => [
+                "total_count" => $a["stamp_total_count"],
+                "failed" => $a["stamp_failed"],
+            ],
             "alerts" => $alerts
         ]);
     }
