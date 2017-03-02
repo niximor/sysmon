@@ -34,9 +34,19 @@ class TemplatedController implements \nixfw\fastrouter\Controller {
                 "controller" => get_class($this),
                 "request" => $_REQUEST,
                 "get" => $_GET,
-                "post" => $_POST
+                "post" => $_POST,
+                "total_alerts_count" => $this->countAlerts()
             ]
         ));
+    }
+
+    public function countAlerts() {
+        $db = connect();
+        $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1");
+        $db->commit();
+        
+        return $q->fetch_array()["count"];
+
     }
 
     public function twig_sorted($val, $key, $default=false, $namespace="") {

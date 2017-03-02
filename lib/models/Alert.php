@@ -40,16 +40,20 @@ class Alert {
             case "dead":
                 $since = DateTime::createFromFormat("Y-m-d G:i:s", $this->data->last_check);
                 if ($this->active) {
-                    return "Host is dead since ".$since->format("Y-m-d H:i:s")." (down for ".format_duration($until->getTimestamp() - $since->getTimestamp()).").";
+                    return "Host is dead since ".$since->format("Y-m-d G:i:s")." (down for ".format_duration($until->getTimestamp() - $since->getTimestamp()).").";
                 } else {
-                    return "Host was dead since ".$since->format("Y-m-d H:i:s")." (was down for ".format_duration($until->getTimestamp() - $since->getTimestamp()).").";
+                    return "Host was dead since ".$since->format("Y-m-d G:i:s")." (was down for ".format_duration($until->getTimestamp() - $since->getTimestamp()).").";
                 }
 
             case "rebooted":
                 return "Host has been rebooted. Was up for ".format_duration($this->data->uptime).".";
 
+            case "stamp":
+                $since = DateTime::createFromFormat("Y-m-d G:i:s", $this->data->last_run);
+                return "Stamp check has failed for stamp ".$this->data->stamp.". Last check was on ".$since->format("Y-m-d G:i:s").", which is ".format_duration($until->getTimestamp() - $since->getTimestamp())." ago.";
+
             default:
-                return $type;
+                return $this->type;
         }
     }
 }

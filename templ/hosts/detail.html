@@ -10,6 +10,7 @@
 <div class="btn-group" role="group" style="margin-bottom: 1.5em">
     <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default">Packages</a>
     <a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" class="btn btn-default">Changelog</a>
+    <a href="{{ url_for(['StampsController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default">Stamps</a>
 </div>
 
 <div class="panel panel-default">

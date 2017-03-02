@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-heartbeat"></span> {{ stamp.stamp }} on {{ stamp.hostname }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['StampsController', 'index']) }}">Stamps</a></li>
+    <li><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></li>
+    <li><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}">{{ stamp.stamp }}</a></li>
+</ol>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Stamp detail</h3>
+    </div>
+    <div class="panel-body">
+        <form action="" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Stamp name:</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">{{ stamp.stamp }}</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Host:</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">{{ stamp.hostname }}</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Last stamp:</label>
+                <div class="col-sm-10">
+                    <p class="form-control-static">{{ stamp.timestamp|datetime("Y-m-d G:i:s") }}</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Alert after:</label>
+                <div class="col-sm-2">
+                    <input type="text" name="alert_after" value="{{ stamp.alert_after|duration('short') }}" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Set to empty to disable stamp checking. You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-primary">Update</button>
+                    <button type="submit" name="remove" class="btn btn-danger" onclick="return confirm('Do you really want to remove this stamp?');">Remove</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

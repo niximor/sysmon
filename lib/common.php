@@ -23,34 +23,79 @@ function connect() {
     return $db;
 }
 
-function format_duration($seconds) {
+function format_duration($seconds, $type = "long") {
+    switch ($type) {
+        case "long":
+            $dict = [
+                "d" => [" days", " day"],
+                "h" => [" hours", " hour"],
+                "m" => [" minutes", " minute"],
+                "s" => [" seconds", " second"]
+            ];
+            $join = ", ";
+            $na = "N/A";
+            break;
+
+        case "short":
+            $dict = [
+                "d" => ["d", "d"],
+                "h" => ["h", "h"],
+                "m" => ["m", "m"],
+                "s" => ["s", "s"]
+            ];
+            $join = "";
+            $na = "";
+            break;
+
+        default:
+            throw new UnexpectedValueException("Duration type can be either 'long' or 'short'.");
+    }
+
     if ($seconds <= 0 || is_null($seconds)) {
-        return "N/A";
+        return $na;
     }
 
     $out = [];
 
-    if ($seconds > 86400) {
+    if ($seconds >= 86400) {
         $days = floor($seconds / 86400);
-        $out[] = $days." days";
+        if ($days != 1) {
+            $out[] = $days.$dict["d"][0];
+        } else {
+            $out[] = $days.$dict["d"][1];
+        }
         $seconds -= $days * 86400;
     }
 
-    if ($seconds > 3600 || !empty($out)) {
+    if ($seconds >= 3600 || (!empty($out) && $type == "long")) {
         $hours = floor($seconds / 3600);
-        $out[] = $hours." hours";
+        if ($hours != 1) {
+            $out[] = $hours.$dict["h"][0];
+        } else {
+            $out[] = $hours.$dict["h"][1];
+        }
         $seconds -= $hours * 3600;
     }
 
-    if ($seconds > 60 || !empty($out)) {
+    if ($seconds >= 60 || (!empty($out) && $type == "long")) {
         $minutes = floor($seconds / 60);
-        $out[] = $minutes." minutes";
+        if ($minutes != 1) {
+            $out[] = $minutes.$dict["m"][0];
+        } else {
+            $out[] = $minutes.$dict["m"][1];
+        }
         $seconds -= $minutes * 60;
     }
 
-    $out[] = $seconds." seconds";
+    if ($seconds > 0 || (!empty($out) && $type == "long")) {
+        if ($seconds != 1) {
+            $out[] = $seconds.$dict["s"][0];
+        } else {
+            $out[] = $seconds.$dict["s"][1];
+        }
+    }
 
-    return implode(", ", $out);
+    return implode($join, $out);
 }
 
 function escape(mysqli $db, $value) {
@@ -59,26 +104,6 @@ function escape(mysqli $db, $value) {
 
 function send_alert(mysqli $db, int $server_id, string $type, $data, bool $active) {
     $db->query("INSERT INTO `alerts` (`server_id`, `timestamp`, `type`, `data`, `active`) VALUES ('".$db->real_escape_string($server_id)."', NOW(), '".$db->real_escape_string($type)."', '".$db->real_escape_string(json_encode($data))."', '".$db->real_escape_string($active)."')") or fail($db->error);
-}
-
-function format_alert($type, $data, $until = NULL) {
-    if (!is_null($until)) {
-        $until = DateTime::createFromFormat("Y-m-d G:i:s", $until);
-    } else {
-        $until = new DateTime();
-    }
-
-    switch ($type) {
-        case "dead":
-            $since = DateTime::createFromFormat("Y-m-d H:i:s", $data->last_check);
-            return "Host is dead since ".$since->format("Y-m-d H:i:s")." (down for ".format_duration($until->getTimestamp() - $since->getTimestamp()).").";
-
-        case "rebooted":
-            return "Host has been rebooted. Was up for ".format_duration($data->uptime).".";
-
-        default:
-            return $type;
-    }
 }
 
 function multi_changelog(mysqli $db, array $changes) {

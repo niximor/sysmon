@@ -1,6 +1,12 @@
 <?php
 
+ini_set("display_errors", true);
+ini_set("display_startup_errors", true);
+
 require_once "lib/common.php";
+
+require_once "controllers/HostsController.php";
+require_once "controllers/StampsController.php";
 
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
@@ -9,32 +15,17 @@ use Fabiang\Xmpp\Options;
 use Fabiang\Xmpp\Client;
 use Fabiang\Xmpp\Protocol\Message;
 
+$modules = [
+    "HostsController", "StampsController"
+];
+
+$db = connect();
+
 try {
-    $db = connect();
-
-    $q = $db->query("SELECT `s`.`id`, `s`.`last_check` FROM `servers` `s` WHERE `last_check` < DATE_ADD(NOW(), INTERVAL -5 MINUTE)") or fail($db->error);
-
-    $dead_hosts = [];
-
-    while ($a = $q->fetch_array()) {
-        // Test if host is not already in failed state.
-        $qs = $db->query("SELECT `id` FROM `alerts` WHERE `server_id` = '".$a["id"]."' AND `type` = 'dead' AND `active` = 1") or fail($db->error);
-        if (!$qs->fetch_array()) {
-            send_alert($db, $a["id"], "dead", ["last_check" => $a["last_check"]], true);
-        }
-
-        $dead_hosts[] = $a["id"];
+    foreach ($modules as $module) {
+        $instance = new $module();
+        $instance->cron($db);
     }
-
-    // Dismiss live hosts dead status.
-    $where = ["`type` = 'dead'", "`active` = 1"];
-    if (!empty($dead_hosts)) {
-        $where[] = "`server_id` NOT IN (".implode(",", $dead_hosts).")";
-    }
-
-    $db->query("UPDATE `alerts` SET `active` = 0, `until` = NOW(), `sent` = 0 WHERE ".implode(" AND ", $where)) or fail($db->error);
-
-    $db->commit();
 
     // Send XMPP alerts.
     $q = $db->query("SELECT `a`.`id`, `a`.`until`, `a`.`type`, `a`.`data`, `s`.`hostname`, `a`.`active` FROM `alerts` `a` JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`) WHERE `sent` = 0");
@@ -58,16 +49,18 @@ try {
             $first = false;
         }
 
+        $alert = new Alert($a);
+
         $type = "ALERT";
-        if ($a["active"] == 0) {
+        if ($alert->active == 0) {
             $type = "RECOVER";
         }
 
         $msg = new Message();
         $msg->setMessage(
             "[".$type."]\n".
-            "Host: ".$a["hostname"]."\n".
-            "Alert: ".format_alert($a["type"], json_decode($a["data"]), $a["until"]));
+            "Host: ".$alert->hostname."\n".
+            "Alert: ".$alert->getMessage());
         $msg->setTo("monitoring@gcm.cz");
         
         $client->send($msg);

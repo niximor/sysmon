@@ -7,10 +7,13 @@ error_reporting(E_ALL);
 
 require_once "lib/common.php";
 
+require_once "exceptions/EntityNotFound.php";
+
 require_once "controllers/HostsController.php";
 require_once "controllers/OverviewController.php";
 require_once "controllers/PackagesController.php";
 require_once "controllers/ErrorController.php";
+require_once "controllers/StampsController.php";
 
 require_once "fastrouter/FastRouter.php";
 
@@ -19,6 +22,9 @@ $router->bind("/", array("OverviewController", "index"));
 $router->bind("/hosts", array("HostsController", "index"));
 $router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
 $router->bind("/hosts/<id>/history", array("HostsController", "history"));
+$router->bind("/stamps", array("StampsController", "index"));
+$router->bind("/stamps/<id>", array("StampsController", "detail"));
+$router->bind("/stamps/put/<hostname>/<stamp>", array("StampsController", "put"));
 $router->bind("/packages", array("PackagesController", "index"));
 
 function twig_url_for(...$args) {
@@ -42,6 +48,9 @@ $route = $router->resolve($url);
 if ($route) {
     try {
         echo $route->execute();
+    } catch (EntityNotFound $e) {
+        $ec = new ErrorController();
+        echo $ec->error404();
     } catch (Throwable $t) {
         $ec = new ErrorController();
         echo $ec->error500($t);

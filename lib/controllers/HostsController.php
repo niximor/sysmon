@@ -1,9 +1,13 @@
 <?php
 
 require_once "controllers/TemplatedController.php";
+require_once "controllers/CronInterface.php";
+
 require_once "models/Alert.php";
 
-class HostsController extends TemplatedController {
+require_once "exceptions/EntityNotFound.php";
+
+class HostsController extends TemplatedController implements CronInterface {
     public function index() {
         $db = connect();
 
@@ -43,7 +47,7 @@ class HostsController extends TemplatedController {
         $host = $q->fetch_array();
 
         if (!$host) {
-            throw new RuntimeException("Host does not exists.");
+            throw new EntityNotFound("Host does not exists.");
         }
 
         $host["last_seen"] = DateTime::createFromFormat("Y-m-d H:i:s", $host["last_check"]);
@@ -125,5 +129,33 @@ class HostsController extends TemplatedController {
             "host" => $host,
             "history" => $history
         ]);
+    }
+
+    public function cron(mysqli $db) {
+        $db = connect();
+
+        $q = $db->query("SELECT `s`.`id`, `s`.`last_check` FROM `servers` `s` WHERE `last_check` < DATE_ADD(NOW(), INTERVAL -5 MINUTE)") or fail($db->error);
+
+        $dead_hosts = [];
+
+        while ($a = $q->fetch_array()) {
+            // Test if host is not already in failed state.
+            $qs = $db->query("SELECT `id` FROM `alerts` WHERE `server_id` = '".$a["id"]."' AND `type` = 'dead' AND `active` = 1") or fail($db->error);
+            if (!$qs->fetch_array()) {
+                send_alert($db, $a["id"], "dead", ["last_check" => $a["last_check"]], true);
+            }
+
+            $dead_hosts[] = $a["id"];
+        }
+
+        // Dismiss live hosts dead status.
+        $where = ["`type` = 'dead'", "`active` = 1"];
+        if (!empty($dead_hosts)) {
+            $where[] = "`server_id` NOT IN (".implode(",", $dead_hosts).")";
+        }
+
+        $db->query("UPDATE `alerts` SET `active` = 0, `until` = NOW(), `sent` = 0 WHERE ".implode(" AND ", $where)) or fail($db->error);
+
+        $db->commit();
     }
 }
