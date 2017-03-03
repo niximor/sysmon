@@ -65,7 +65,7 @@ try {
             "[".$type."]\n".
             "Host: ".$alert->hostname."\n".
             "Alert: ".$alert->getMessage());
-        $msg->setTo("monitoring@gcm.cz");
+        $msg->setTo($config["xmpp-target"]);
         
         $client->send($msg);
         usleep(200000); // Seems like XMPP delivers only one message, when multiple are sent during short period. This should fix it.

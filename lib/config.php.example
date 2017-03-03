@@ -8,6 +8,7 @@ $config = [
 
     "xmpp-host" => "tcp://jabber.org:5222",
     "xmpp-user" => "sysmon",
-    "xmpp-domain" => "jabber.org",
+    "xmpp-domain" => "example.com",
     "xmpp-password" => "",
+    "xmpp-target" => "ops@example.com",
 ];
