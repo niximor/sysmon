@@ -49,7 +49,7 @@ class TemplatedController implements \nixfw\fastrouter\Controller {
         $db = connect();
         $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1");
         $db->commit();
-        
+
         return $q->fetch_array()["count"];
 
     }

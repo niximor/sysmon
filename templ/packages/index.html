@@ -9,48 +9,53 @@
 <div class="panel panel-default">
     <div class="panel-heading clearfix">
         <h3 class="panel-title">Filter</h3>
+        <ul class="panel-tool-options">
+            <li><a data-toggle="collapse" href="#filterBody" aria-expanded="{% if get.host or get.package or get.version %}true{% else %}false{% endif %}" aria-controls="filterBody"><span class="fa fa-chevron-down"></span></a></li>
+        </ul>
     </div>
-    <div class="panel-body">
-        <form action="{{ url_for(['PackagesController', 'index']) }}" method="get" class="form-horizontal">
-            <input type="hidden" name="order" value="{{ get.order }}" />
-            <input type="hidden" name="direction" value="{{ get.direction }}" />
-            <div class="form-group">
-                <label for="inputHost" class="col-sm-2 control-label">Host:</label>
-                <div class="col-sm-10">
-                    <input type="text" name="host" id="inputHost" value="{{ request.host }}" class="form-control" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="inputPackage" class="col-sm-2 control-label">Package:</label>
-                <div class="col-sm-10">
-                    <input type="text" name="package" id="inputPackage" value="{{ request.package }}" class="form-control" />
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="inputVersion" class="col-sm-2 control-label">Version:</label>
-                <div class="col-sm-10 input-group">
-                    <div class="col-sm-2">
-                        <select name="version_match" class="form-control">
-                            <option value="="{% if request.version_match == '=' %} selected{% endif %}>equals</option>
-                            <option value="!="{% if request.version_match == '!=' %} selected{% endif %}>not equals</option>
-                            <option value="&gt;"{% if request.version_match == '>' %} selected{% endif %}>higher</option>
-                            <option value="&lt;"{% if request.version_match == '<' %} selected{% endif %}>lower</option>
-                        </select>
-                    </div>
+    <div class="collapse{% if get.host or get.package or get.version %} in{% endif %}" id="filterBody">
+        <div class="panel-body">
+            <form action="{{ url_for(['PackagesController', 'index']) }}" method="get" class="form-horizontal">
+                <input type="hidden" name="order" value="{{ get.order }}" />
+                <input type="hidden" name="direction" value="{{ get.direction }}" />
+                <div class="form-group">
+                    <label for="inputHost" class="col-sm-2 control-label">Host:</label>
                     <div class="col-sm-10">
-                        <input type="text" name="version" id="inputVersion" value="{{ request.version }}" class="form-control" />
+                        <input type="text" name="host" id="inputHost" value="{{ request.host }}" class="form-control" />
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <div class="col-sm-offset-2 col-sm-10">
-                    <input type="submit" value="Show" class="btn btn-primary" />
+                <div class="form-group">
+                    <label for="inputPackage" class="col-sm-2 control-label">Package:</label>
+                    <div class="col-sm-10">
+                        <input type="text" name="package" id="inputPackage" value="{{ request.package }}" class="form-control" />
+                    </div>
                 </div>
-            </div>
-        </form>
+
+                <div class="form-group">
+                    <label for="inputVersion" class="col-sm-2 control-label">Version:</label>
+                    <div class="col-sm-10 input-group">
+                        <div class="col-sm-2">
+                            <select name="version_match" class="form-control">
+                                <option value="="{% if request.version_match == '=' %} selected{% endif %}>equals</option>
+                                <option value="!="{% if request.version_match == '!=' %} selected{% endif %}>not equals</option>
+                                <option value="&gt;"{% if request.version_match == '>' %} selected{% endif %}>higher</option>
+                                <option value="&lt;"{% if request.version_match == '<' %} selected{% endif %}>lower</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-10">
+                            <input type="text" name="version" id="inputVersion" value="{{ request.version }}" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-sm-offset-2 col-sm-10">
+                        <input type="submit" value="Show" class="btn btn-primary" />
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
