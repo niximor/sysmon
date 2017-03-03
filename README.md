@@ -9,6 +9,7 @@ Tool for monitoring system status of Linux servers. Currently the support is onl
 - Collect basic information about Linux system
 - Collect list of packages and their versions
 - Logs history of changed attributes and packages
+- Supports monitoring of periodic processes
 - Sends XMPP notifications when host did not updated it's status in a while.
 
 The list of features is not final, new features are added on per-demand basis.
