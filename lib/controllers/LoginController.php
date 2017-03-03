@@ -6,7 +6,7 @@ require_once "models/Session.php";
 
 class LoginController extends TemplatedController {
     const LOGIN_LIFETIME_LONG = 86400 * 365;
-    const LOGIN_LIFETIME_SHORT = 7200;
+    const LOGIN_LIFETIME_SHORT = NULL;
 
     public function index(...$args) {
         if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST["username"]) && isset($_POST["password"])) {
@@ -17,7 +17,8 @@ class LoginController extends TemplatedController {
 
             if ($a = $q->fetch_array()) {
                 if (hash("sha256", $a["salt"].$_POST["password"]) == $a["password"]) {
-                    Session::set("user_id", $a["id"], (isset($_POST["remember"]))?self::LOGIN_LIFETIME_LONG:self::LOGIN_LIFETIME_SHORT);
+                    $lifetime = (isset($_POST["remember"]))?self::LOGIN_LIFETIME_LONG:self::LOGIN_LIFETIME_SHORT;
+                    Session::set("user_id", $a["id"], $lifetime);
                     $valid = true;
                 }
             }

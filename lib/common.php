@@ -11,14 +11,16 @@ function fail($msg) {
 }
 
 function connect() {
-    global $config;
+    global $config, $db;
 
-    $db = new mysqli($config["mysql-host"], $config["mysql-user"], $config["mysql-password"], $config["mysql-database"]);
-    if ($db->connect_error) {
-        fail($db->connect_error);
+    if (!isset($db)) {
+        $db = new mysqli($config["mysql-host"], $config["mysql-user"], $config["mysql-password"], $config["mysql-database"]);
+        if ($db->connect_error) {
+            fail($db->connect_error);
+        }
+
+        $db->query("SET NAMES utf8") or fail($db->error);
     }
-
-    $db->query("SET NAMES utf8") or fail($db->error);
 
     return $db;
 }

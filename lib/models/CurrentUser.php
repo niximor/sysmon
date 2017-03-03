@@ -16,6 +16,16 @@ class CurrentUser {
                 $this->username = $a["name"];
                 $this->id = $a["id"];
             }
+
+            $ip = $_SERVER["REMOTE_ADDR"];
+            if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])) {
+                $ip = $_SERVER["HTTP_X_FORWARDED_FOR"];
+            }
+
+            $lifetime = Session::getLifetime("user_id");
+
+            Session::set("ip", $ip, $lifetime);
+            Session::set("ua", $_SERVER["HTTP_USER_AGENT"], $lifetime);
         }
     }
 }

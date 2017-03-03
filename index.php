@@ -15,6 +15,7 @@ require_once "controllers/OverviewController.php";
 require_once "controllers/PackagesController.php";
 require_once "controllers/ErrorController.php";
 require_once "controllers/StampsController.php";
+require_once "controllers/ProfileController.php";
 
 require_once "fastrouter/FastRouter.php";
 
@@ -32,6 +33,8 @@ if (Session::get("user_id")) {
     $router->bind("/stamps", array("StampsController", "index"));
     $router->bind("/stamps/<id>", array("StampsController", "detail"));
     $router->bind("/packages", array("PackagesController", "index"));
+    $router->bind("/profile", array("ProfileController", "index"));
+    $router->bind("/profile/revoke/<session>", array("ProfileController", "revoke"));
     $router->bind("/logout", array("LoginController", "logout"));
 } else {
     $router->bind("/", array("LoginController", "index"));

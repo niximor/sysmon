@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>{{ current_user.username }}</h1>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h2 class="panel-title">Sessions</h2>
+    </div>
+
+    <ul class="list-group">
+        {% for session in sessions %}
+            <li class="list-group-item">
+                <dl class="dl-horizontal">
+                    {% if session.ua %}
+                    <dt>User-Agent:</dt>
+                    <dd>{{ session.ua }}</dd>
+                    {% endif %}
+
+                    <dt>Last activity:</dt>
+                    <dd>
+                        {% if session.current %}
+                            <span class="text-success">CURRENT SESSION</span>
+                        {% else %}
+                            {{ session.last_seen|datetime }}
+                        {% endif %}
+                    </dd>
+
+                    {% if session.ip %}
+                    <dt>IP:</dt>
+                    <dd>{{ session.ip }} ({{ session.hostname }})</dd>
+                    {% endif %}
+                </dl>
+                {% if not session.current %}
+                <div class="com-sm-10 col-sm-offset-2">
+                    <a href="{{ url_for(['ProfileController', 'revoke'], {'session': session.id}) }}" class="btn btn-danger">Revoke</a>
+                </div>
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

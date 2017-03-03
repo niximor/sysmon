@@ -19,8 +19,8 @@
                 <li{% if controller == "StampsController" %} class="active"{% endif %}><a href="{{ url_for(['StampsController', 'index']) }}"><span class="fa fa-heartbeat"></span> Stamps</a></li>
             </ul>
             <div class="navbar-right">
-                <p class="navbar-text"><span class="fa fa-user-circle-o"></span> {{ current_user.username }}</p>
                 <ul class="nav navbar-nav">
+                    <li><a href="{{ url_for(['ProfileController', 'index']) }}"><span class="fa fa-user-circle-o"></span> {{ current_user.username }}</a></li>
                     <li><a href="{{ url_for(['LoginController', 'logout']) }}"><span class="fa fa-sign-out"></span> Logout</a></li>
                 </ul>
             </div>
@@ -29,6 +29,8 @@
 </nav>
 
 <div class="container">
+    {{ include("messages.html") }}
+
     {% block main %}
     {% endblock %}
 </div>
