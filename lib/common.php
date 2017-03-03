@@ -69,7 +69,7 @@ function format_duration($seconds, $type = "long") {
         $seconds -= $days * 86400;
     }
 
-    if ($seconds >= 3600 || (!empty($out) && $type == "long")) {
+    if ($seconds >= 3600) {
         $hours = floor($seconds / 3600);
         if ($hours != 1) {
             $out[] = $hours.$dict["h"][0];
@@ -79,7 +79,7 @@ function format_duration($seconds, $type = "long") {
         $seconds -= $hours * 3600;
     }
 
-    if ($seconds >= 60 || (!empty($out) && $type == "long")) {
+    if ($seconds >= 60) {
         $minutes = floor($seconds / 60);
         if ($minutes != 1) {
             $out[] = $minutes.$dict["m"][0];
@@ -89,7 +89,7 @@ function format_duration($seconds, $type = "long") {
         $seconds -= $minutes * 60;
     }
 
-    if ($seconds > 0 || (!empty($out) && $type == "long")) {
+    if ($seconds > 0) {
         if ($seconds != 1) {
             $out[] = $seconds.$dict["s"][0];
         } else {
