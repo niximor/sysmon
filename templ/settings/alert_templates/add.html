@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-gear"></span> Alert templates</h1>
+
+<ol class="breadcrumb">
+    <li>Settings</li>
+    <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}">Alert templates</a></li>
+    <li><a href="{{ url_for(['AlertTemplatesController', 'add']) }}">Add</a></li>
+</ol>
+
+<form action="{{ url_for(['AlertTemplatesController', 'add']) }}" method="post" class="form-horizontal">
+    <div class="form-group">
+        <label for="inputAlertType" class="col-sm-2 control-label">Alert type:</label>
+        <div class="col-sm-10">
+            <input type="text" name="alert_type" id="inputAlertType" value="{{ request.alert_type }}" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputTemplate" class="col-sm-2 control-label">Template:</label>
+        <div class="col-sm-10">
+            <textarea name="template" id="inputTemplate" class="form-control" rows="10">{{ request.template }}</textarea>
+        </div>
+        <div class="col-sm-10 col-sm-offset-2">
+            <p class="help-block">Template receives <code>alert</code> structure containing following fields:<br />
+            - <code>type</code> - type of alert, matching template alert type.<br />
+            - <code>active</code> - whether alert is active or not.<br />
+            - <code>timestamp</code> - date and time when the alert occured.<br />
+            - <code>until</code> - if alert is not active, contains date and time when the alert passed.<br />
+            - <code>data</code> - custom alert data, specific per alert type.<br />
+            - <code>hostname</code> - host name of server that generated the alert.<br />
+            - <code>check</code> - name of check that generated the alert (if alert is for check).<br />
+            </p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-10 col-sm-offset-2">
+            <input type="submit" value="Add" class="btn btn-primary" />
+        </div>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hand-o-right"></span> {{ check.name }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+</ol>
+
+<div class="btn-group" role="group">
+    {% if check.enabled %}
+        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
+    {% else %}
+        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+    {% endif %}
+    <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+    <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+</div>
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Overview</h3>
+            </div>
+            <div class="panel-body">
+                <dl class="dl-horizontal">
+                    <dt>Name:</dt>
+                    <dd>{{ check.name }}</dd>
+
+                    <dt>Server:</dt>
+                    <dd>{{ check.hostname }}</dd>
+
+                    <dt>Type:</dt>
+                    <dd>{{ check.type }}</dd>
+
+                    <dt>Enabled:</dt>
+                    <dd>{% if check.enabled %}<span class="label label-success">Yes</span>{% else %}<span class="label label-default">No</span>{% endif %}</dd>
+
+                    <dt>Check interval:</dt>
+                    <dd>{{ check.interval|duration }}</dd>
+
+                    <dt>Last check:</dt>
+                    <dd>{{ check.last_check|datetime }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">{{ chart.name }}</h3>
+
+                <ul class="panel-tool-options">
+                    <li class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" id="granularityMenu">
+                            Chart
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="granularityMenu">
+                            {% for chart in charts %}
+                            <li><a href="?chart={{ chart.id }}&amp;granularity={{ granularity }}">{{ chart.name }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+
+                    <li class="dropdown">
+                        <button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" id="granularityMenu">
+                            {{ granularity }}
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="granularityMenu">
+                            <li><a href="?chart={{ chart.id }}&amp;granularity=daily">Daily</a></li>
+                            <li><a href="?chart={{ chart.id }}&amp;granularity=weekly">Weekly</a></li>
+                            <li><a href="?chart={{ chart.id }}&amp;granularity=monthly">Monthly</a></li>
+                            <li><a href="?chart={{ chart.id }}&amp;granularity=yearly">Yearly</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="panel-body">
+                <div class="chart-container">
+                    <div class="chart">
+                         <div id="chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Alerts</h3>
+    </div>
+    <div class="table-reponsive">
+        <table class="panel-body table table-striped table-hover table-condensed">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Message</th>
+                    <th class="td-shrink"></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for alert in alerts %}
+                    <tr class="{% if alert.active %}danger{% endif %}">
+                        <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d H:i:s") }}</td>
+                        <td>{{ alert.getMessage()|raw }}</td>
+                        <td class="td-shrink">
+                            {% if alert.active %}
+                            <a class="btn btn-danger btn-sm" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">Dismiss</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3"><div class="well">Hooray, no alerts to show!</div></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script src="{{ url_for('static', 'flot/jquery.flot.min.js') }}"></script>
+<script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
+<script>
+    var series = [];
+
+    var now = new Date().getTime()
+
+    var ranges = {
+        "daily": {
+            "min": now - 86400 * 1000,
+            "max": now
+        },
+        "weekly": {
+            "min": now - (7 * 86400) * 1000,
+            "max": now
+        },
+        "monthly": {
+            "min": now - (30 * 86400) * 1000,
+            "max": now
+        },
+        "yearly": {
+            "min": now - (365 * 86400) * 1000,
+            "max": now
+        }
+    };
+    var range = ranges["{{ granularity }}"];
+
+    {% for name, values in series %}
+        series.push({
+            label: "{{ name }}",
+            data: [
+                {% for value in values %}
+                [{{ value[0] }}*1000, {{ value[1] }}],
+                {% endfor %}
+            ]
+        });
+    {% endfor %}
+
+    $.plot("#chart", series, {
+        xaxis: {
+            mode: "time",
+            min: range.min,
+            max: range.max
+        },
+        grid: {
+            borderWidth: 0
+        },
+        series: {
+            lines: {
+                lineWidth: 1
+            },
+            shadowSize: 0
+        },
+        legend: {
+            show: true,
+        },
+        colors: ["#00cc00", "#0066b3", "#ff8000", "#ffcc00", "#330099", "#990099", "#ccff00", "#ff0000", "#808080"]
+    });
+</script>
+
+{% endblock %}

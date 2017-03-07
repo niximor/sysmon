@@ -7,6 +7,8 @@ require_once "models/Stamp.php";
 
 require_once "exceptions/EntityNotFound.php";
 
+require_once "models/Message.php";
+
 class StampsController extends TemplatedController implements CronInterface {
     public function index() {
         $db = connect();
@@ -71,33 +73,16 @@ class StampsController extends TemplatedController implements CronInterface {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (isset($_POST["remove"])) {
                 $db->query("DELETE FROM `stamps` WHERE `id` = ".escape($db, $id));
+                $db->commit();
+
+                Message::create(Message::SUCCESS, "Stamp has been removed.");
 
                 header("Location: ".twig_url_for(["StampsController", "index"]));
                 exit;
             }
 
-            $alert_after = $_POST["alert_after"];
-
-            if (preg_match_all("/(([0-9]+)([wdhms]))\s*/", $alert_after, $matches)) {
-                $alert_after = 0;
-                for ($i = 0; $i < count($matches[1]); ++$i) {
-                    $multiply = 0;
-                    switch ($matches[3][$i]) {
-                        case "w": $multiply = 7*86400; break;
-                        case "d": $multiply = 86400; break;
-                        case "h": $multiply = 3600; break;
-                        case "m": $multiply = 60; break;
-                        case "s": $multiply = 1; break;
-                    }
-
-                    $alert_after += $matches[2][$i] * $multiply;
-                }
-            }
-
-            if ($alert_after <= 0 || empty($alert_after)) {
-                $alert_after = NULL;
-            }
-
+            $alert_after = parse_duration($_POST["alert_after"]);
+            
             $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
 
             // Dismiss alerts if the stamp is now valid.
@@ -117,6 +102,8 @@ class StampsController extends TemplatedController implements CronInterface {
             }
 
             $db->commit();
+
+            Message::create(Message::SUCCESS, "Stamp has been modified.");
 
             header("Location: ".twig_url_for(["StampsController", "detail"], ["id" => $id]));
             exit;

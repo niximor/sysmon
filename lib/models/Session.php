@@ -129,7 +129,7 @@ class Session {
 
     public static function cleanup() {
         $db = connect();
-        $db->query("DELETE FROM `session` WHERE `timestamp` < DATE_ADD(NOW(), INTERVAL -COALESCE(`lifetime`, ".self::DEFAULT_LIFETIME." SECOND)") or fail($db->error);
+        $db->query("DELETE FROM `session` WHERE `timestamp` < DATE_ADD(NOW(), INTERVAL -COALESCE(`lifetime`, ".self::DEFAULT_LIFETIME.") SECOND)") or fail($db->error);
         $db->commit();
     }
 }

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hand-o-right"></span> {{ check.name }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}">Edit</a></li>
+</ol>
+
+<form action="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}{% if request.back %}?back={{ request.back }}{% endif %}" method="post" class="form-horizontal">
+    <div class="form-group">
+        <label for="inputName" class="col-sm-2 control-label">Name:</label>
+        <div class="col-sm-10">
+            <input type="text" name="name" id="inputName" value="{{ request.name|default(check.name) }}" class="form-control" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputServer" class="col-sm-2 control-label">Host:</label>
+        <div class="col-sm-10">
+            <select name="server" id="inputServer" class="form-control">
+                {% for server in servers %}
+                    <option value="{{ server.id }}"{% if request.server|default(check.server_id) == server.id %} selected{% endif %}>{{ server.hostname }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-sm-10 col-sm-offset-2">
+            <p class="help-block">Select server where the check will be run.</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputInterval" class="col-sm-2 control-label">Interval:</label>
+        <div class="col-sm-10">
+            <input type="text" name="interval" id="inputInterval" class="form-control" value="{{ request.interval|default(check.interval)|duration('short') }}" />
+        </div>
+        <div class="col-sm-10 col-sm-offset-2">
+            <p class="help-block">Set time how often the check should be run. Minimum is one minute. Remember, that the cron job runs each minute, so lower granularity will not work.<br />
+            You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputType" class="col-sm-2 control-label">Type:</label>
+        <div class="col-sm-10">
+            <select name="type" id="inputType" class="form-control">
+                {% for type in types %}
+                    <option value="{{ type.id }}"{% if request.type|default(check.type_id) == type.id %} selected{% endif %}>{{ type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="inputParams" class="col-sm-2 control-label">Params:</label>
+        <div class="col-sm-10">
+            {% for name, value in request.params|default(check.params) %}
+            <div class="input-group" style="width: 100%">
+                <input type="text" name="params[]" value="{{ name }}" placeholder="Name" class="form-control" style="width: 20%" />
+                <input type="text" name="values[]" value="{{ value }}" placeholder="Value" class="form-control" style="width: 80%" />
+            </div>
+            {% endfor %}
+            <button type="button" class="btn btn-default" id="btnAddParam"><span class="fa fa-plus"></span></button>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-10 col-sm-offset-2">
+            <input type="submit" value="Edit" class="btn btn-primary" />
+        </div>
+    </div>
+</form>
+<script>
+$(function(){
+    $("#btnAddParam").each(function(){
+        $(this).click(function(){
+            $("<div class=\"input-group\" style=\"width: 100%\"><input type=\"text\" name=\"params[]\" placeholder=\"Name\" class=\"form-control\" style=\"width: 20%\" /><input type=\"text\" name=\"values[]\" placeholder=\"Value\" class=\"form-control\" style=\"width: 80%\" /></div>").insertBefore(this);
+        });
+    });
+});
+</script>
+{% endblock %}

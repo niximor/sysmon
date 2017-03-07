@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hand-o-right"></span> Checks</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+</ol>
+
+<div class="btn-group" role="group">
+    <a href="{{ url_for(['ChecksController', 'add']) }}" class="btn btn-default">Add</a>
+</div>
+
+<table class="table table-striped table-compacted table-hover">
+    <thead>
+        <tr>
+            <th colspan="2">{{ "Name"|sorted("name", true) }}</th>
+            <th>{{ "Host"|sorted("hostname") }}</th>
+            <th>{{ "Type"|sorted("type") }}</th>
+            <th>{{ "Interval"|sorted("interval") }}</th>
+            <th class="td-shrink"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for check in checks %}
+            <tr{% if check.alerts > 0 %} class="danger"{% endif %}>
+                <td><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></td>
+                <td>{% if check.alerts > 0 %}<span class="label label-danger">{{ check.alerts }}</span>{% endif %}</td>
+                <td>{{ check.hostname }}</td>
+                <td>{{ check.type }}</td>
+                <td>{{ check.interval|duration }}</td>
+                <td class="td-shrink">
+                    {% if check.enabled %}
+                        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
+                    {% else %}
+                        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+                    {% endif %}
+                    <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                    <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

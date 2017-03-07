@@ -3,6 +3,8 @@
 ini_set("display_errors", true);
 ini_set("display_startup_errors", true);
 
+set_time_limit(0);
+
 require_once "lib/common.php";
 
 require_once "controllers/HostsController.php";
@@ -64,9 +66,9 @@ try {
         $msg->setMessage(
             "[".$type."]\n".
             "Host: ".$alert->hostname."\n".
-            "Alert: ".$alert->getMessage());
+            "Alert: ".strip_tags($alert->getMessage()));
         $msg->setTo($config["xmpp-target"]);
-        
+
         $client->send($msg);
         usleep(200000); // Seems like XMPP delivers only one message, when multiple are sent during short period. This should fix it.
 

@@ -8,35 +8,68 @@ error_reporting(E_ALL);
 require_once "lib/common.php";
 
 require_once "exceptions/EntityNotFound.php";
-
-require_once "controllers/LoginController.php";
-require_once "controllers/HostsController.php";
-require_once "controllers/OverviewController.php";
-require_once "controllers/PackagesController.php";
-require_once "controllers/ErrorController.php";
-require_once "controllers/StampsController.php";
-require_once "controllers/ProfileController.php";
-
+require_once "models/Session.php";
 require_once "fastrouter/FastRouter.php";
 
-require_once "models/Session.php";
+require_once "controllers/ErrorController.php";
+require_once "controllers/LoginController.php";
 
 $router = new \nixfw\fastrouter\FastRouter();
 
+// API
+require_once "controllers/StampsController.php";
 $router->bind("/stamps/put/<hostname>/<stamp>", array("StampsController", "put"));
 
+require_once "controllers/ChecksController.php";
+$router->bind("/checks/list/<hostname>", array("ChecksController", "list"));
+$router->bind("/checks/put", array("ChecksController", "put"));
+
+// Website
 if (Session::get("user_id")) {
+    require_once "controllers/OverviewController.php";
     $router->bind("/", array("OverviewController", "index"));
+    $router->bind("/alerts/dismiss/<id>", array("OverviewController", "dismiss"));
+
+    require_once "controllers/HostsController.php";
     $router->bind("/hosts", array("HostsController", "index"));
     $router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
     $router->bind("/hosts/<id>/history", array("HostsController", "history"));
+
+    require_once "controllers/StampsController.php";
     $router->bind("/stamps", array("StampsController", "index"));
     $router->bind("/stamps/<id>", array("StampsController", "detail"));
+
+    require_once "controllers/PackagesController.php";
     $router->bind("/packages", array("PackagesController", "index"));
+
+    require_once "controllers/ChecksController.php";
+    $router->bind("/checks", array("ChecksController", "index"));
+    $router->bind("/checks/<id>", array("ChecksController", "detail"));
+    $router->bind("/checks/add", array("ChecksController", "add"));
+    $router->bind("/checks/edit/<id>", array("ChecksController", "edit"));
+    $router->bind("/checks/toggle/<id>", array("ChecksController", "toggle"));
+    $router->bind("/checks/remove/<id>", array("ChecksController", "remove"));
+
+    require_once "controllers/AlertTemplatesController.php";
+    $router->bind("/settings/alert-templates", array("AlertTemplatesController", "index"));
+    $router->bind("/settings/alert-templates/add", array("AlertTemplatesController", "add"));
+    $router->bind("/settings/alert-templates/edit/<id>", array("AlertTemplatesController", "edit"));
+    $router->bind("/settings/alert-templates/remove/<id>", array("AlertTemplatesController", "remove"));
+
+    require_once "controllers/CheckChartsController.php";
+    $router->bind("/settings/check-charts", array("CheckChartsController", "index"));
+    $router->bind("/settings/check-charts/add", array("CheckChartsController", "add"));
+    $router->bind("/settings/check-charts/edit/<id>", array("CheckChartsController", "edit"));
+    $router->bind("/settings/check-charts/remove/<id>", array("CheckChartsController", "remove"));
+
+    require_once "controllers/ProfileController.php";
     $router->bind("/profile", array("ProfileController", "index"));
     $router->bind("/profile/revoke/<session>", array("ProfileController", "revoke"));
+
+    require_once "controllers/LoginController.php";
     $router->bind("/logout", array("LoginController", "logout"));
 } else {
+    require_once "controllers/LoginController.php";
     $router->bind("/", array("LoginController", "index"));
 }
 

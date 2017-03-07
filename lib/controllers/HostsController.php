@@ -52,17 +52,9 @@ class HostsController extends TemplatedController implements CronInterface {
 
         $host["last_seen"] = DateTime::createFromFormat("Y-m-d H:i:s", $host["last_check"]);
 
-        $alerts = [];
-
-        $q = $db->query("SELECT `id`, `timestamp`, `type`, `until`, `data`, `active` FROM `alerts` WHERE `server_id` = '".$db->real_escape_string($id)."' ORDER BY `id` DESC LIMIT 0, 25");
-
-        while ($a = $q->fetch_array()) {
-            $alerts[] = new Alert($a);
-        }
-
         return $this->renderTemplate("hosts/detail.html", [
             "host" => $host,
-            "alerts" => $alerts
+            "alerts" => Alert::loadLatest($db, $id),
         ]);
     }
 

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-gear"></span> Check charts</h1>
+
+<ol class="breadcrumb">
+    <li>Settings</li>
+    <li><a href="{{ url_for(['CheckChartsController', 'index']) }}">Check charts</a></li>
+</ol>
+
+<form action="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" method="post" class="form-horizontal">
+    <div class="form-group">
+        <label class="col-sm-2 form-label" for="inputName">Name:</label>
+        <div class="col-sm-10">
+            <input type="text" class="form-control" id="inputName" name="name" value="{{ chart.chart }}" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 form-label" for="inputType">Check type:</label>
+        <div class="col-sm-10">
+            <select name="type" class="form-control" id="inputType">
+                {% for type in check_types %}
+                    <option value="{{ type.id }}"{% if chart.type_id == type.id %} selected{% endif %}>{{ type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-sm-2 form-label">Readings:</label>
+        <div class="col-sm-10">
+            {% for reading in all_readings %}
+            <div class="checkbox">
+                <label><input type="checkbox" name="readings[]" value="{{ reading.id }}"{% if reading.selected %} checked{% endif%} /> {{ reading.name }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-sm-10 col-sm-offset-2">
+            <input type="submit" value="Add" class="btn btn-primary" />
+        </div>
+    </div>
+</form>
+
+{% endblock %}

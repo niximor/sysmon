@@ -7,7 +7,7 @@
     <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
 </ol>
 
-<div class="btn-group" role="group" style="margin-bottom: 1.5em">
+<div class="btn-group" role="group">
     <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default">Packages</a>
     <a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" class="btn btn-default">Changelog</a>
     <a href="{{ url_for(['StampsController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default">Stamps</a>
@@ -53,14 +53,20 @@
                 <tr>
                     <th>When</th>
                     <th>Message</th>
+                    <th class="td-shrink"></th>
                 </tr>
             </thead>
 
             <tbody>
                 {% for alert in alerts %}
                     <tr class="{% if alert.active %}danger{% endif %}">
-                        <td>{{ alert.timestamp|datetime("Y-m-d H:i:s") }}</td>
-                        <td>{{ alert.getMessage() }}</td>
+                        <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d H:i:s") }}</td>
+                        <td>{{ alert.getMessage()|raw }}</td>
+                        <td>
+                            {% if alert.active %}
+                            <a class="btn btn-danger btn-sm" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">Dismiss</a>
+                            {% endif %}
+                        </td>
                     </tr>
                 {% else %}
                     <tr>

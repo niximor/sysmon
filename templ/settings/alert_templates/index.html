@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-gear"></span> Alert templates</h1>
+
+<ol class="breadcrumb">
+    <li>Settings</li>
+    <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}">Alert templates</a></li>
+</ol>
+
+<div class="btn-group" role="group">
+    <a href="{{ url_for(['AlertTemplatesController', 'add']) }}" class="btn btn-default">Add</a>
+</div>
+
+<table class="table table-compacted table-striped table-hover">
+    <thead>
+        <tr>
+            <th>{{ "Alert type"|sorted("alert_type", true) }}</th>
+            <th class="td-shrink"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for template in templates %}
+            <tr>
+                <td>{{ template.alert_type }}</td>
+                <td class="td-shrink">
+                    <a href="{{ url_for(['AlertTemplatesController', 'edit'], {'id': template.id}) }}" class="btn btn-default btn-sm">Edit</a>
+                    <a href="{{ url_for(['AlertTemplatesController', 'remove'], {'id': template.id}) }}" class="btn btn-default btn-sm">Remove</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="2">
+                    <div class="well">No alert template has been defined.</div>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

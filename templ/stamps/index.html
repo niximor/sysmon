@@ -59,8 +59,20 @@
                 <tr{% if stamp.in_alert %} class="danger"{% endif %}>
                     <td><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}"><span class="glyphicon glyphicon-search" style="vertical-align: text-top"></span> {{ stamp.stamp }}</a></td>
                     <td><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></td>
-                    <td>{{ stamp.timestamp|datetime("Y-m-d G:i:s") }}</td>
-                    <td>{{ stamp.alert_after|duration }}</td>
+                    <td>
+                        {{ stamp.timestamp|datetime("Y-m-d G:i:s") }}
+                        {% if stamp.alert_after %}<br />{{ stamp.ago | duration }} ago{% endif %}
+                    </td>
+                    <td>
+                        {{ stamp.alert_after|duration }}<br />
+                        {% if stamp.alert_after %}
+                        <div class="progress progress-small">
+                            <div class="progress-bar progress-bar-striped {% if stamp.time_remaining_percent < 10 %}progress-bar-danger{% elseif stamp.time_remaining_percent < 50 %}progress-bar-warning{% else %}progress-bar-success{% endif %}" role="progressbar" aria-valuenow="{{ stamp.time_remaining_percent }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ stamp.time_remaining_percent }}%">
+                                <span class="sr-only">{{ stamp.time_remaining_percent }}% of time remaining</span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </td>
                 </tr>
             {% else %}
                 <tr>

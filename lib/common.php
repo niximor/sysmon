@@ -100,6 +100,30 @@ function format_duration($seconds, $type = "long") {
     return implode($join, $out);
 }
 
+function parse_duration($duration) {
+    if (preg_match_all("/(([0-9]+)([wdhms]))\s*/", $duration, $matches)) {
+        $duration = 0;
+        for ($i = 0; $i < count($matches[1]); ++$i) {
+            $multiply = 0;
+            switch ($matches[3][$i]) {
+                case "w": $multiply = 7*86400; break;
+                case "d": $multiply = 86400; break;
+                case "h": $multiply = 3600; break;
+                case "m": $multiply = 60; break;
+                case "s": $multiply = 1; break;
+            }
+
+            $duration += $matches[2][$i] * $multiply;
+        }
+    }
+
+    if ($duration <= 0 || empty($duration)) {
+        $duration = NULL;
+    }
+
+    return $duration;
+}
+
 function escape(mysqli $db, $value) {
     return ((is_null($value))?"NULL":"'".$db->real_escape_string($value)."'");
 }
