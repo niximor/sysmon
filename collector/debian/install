@@ -1,2 +1,3 @@
 sysmon-collect.py usr/bin
+sysmon-checker.py usr/bin
 
