@@ -174,10 +174,7 @@ def main():
             r = requests.put("%s/checks/put" % (SYSMON_ADDRESS, ), data=json.dumps(response))
 
             if r.status_code != 200:
-                print(r.text)
                 syslog.syslog(syslog.LOG_ERR, r.text)
-            else:
-                print(r.text)
     except Exception as e:
         import traceback
         traceback.print_exc()

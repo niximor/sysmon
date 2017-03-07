@@ -1,3 +1,2 @@
-sysmon-collect.py usr/bin
-sysmon-checker.py usr/bin
-
+src/sysmon-checker.py usr/bin
+src/sysmon-collect.py usr/bin
