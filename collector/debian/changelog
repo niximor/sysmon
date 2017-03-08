@@ -1,3 +1,9 @@
+gcm-sysmon-collector (1.1.2) xenial; urgency=medium
+
+  * Fixed crontab file.
+
+ -- Michal Kuchta <niximor@gmail.com>  Wed, 08 Mar 2017 07:54:42 +0100
+
 gcm-sysmon-collector (1.1.1) xenial; urgency=medium
 
   * Added checker to installation and cron.

@@ -3,7 +3,6 @@ DEPLOY_DESTS=
 
 all:
 
-
 include Makefile.*
 
 install:
@@ -19,3 +18,5 @@ endef
 
 deploy:
 	$(foreach host,$(DEPLOY_DESTS),$(call deploy-package,$(host)))
+
+.PHONY: all install deb deploy
