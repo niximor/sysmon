@@ -34,7 +34,21 @@ try {
     Session::cleanup();
 
     // Send XMPP alerts.
-    $q = $db->query("SELECT `a`.`id`, `a`.`until`, `a`.`type`, `a`.`data`, `s`.`hostname`, `a`.`active` FROM `alerts` `a` JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`) WHERE `sent` = 0");
+    $q = $db->query("SELECT
+        `a`.`id`,
+        `a`.`server_id`,
+        `a`.`check_id`,
+        `a`.`timestamp`,
+        `a`.`until`,
+        `a`.`type`,
+        `a`.`data`,
+        `a`.`active`,
+        `s`.`hostname`,
+        `ch`.`name` AS `check`
+        FROM `alerts` `a`
+        JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
+        LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
+        WHERE `sent` = 0");
 
     $first = true;
     $client = NULL;

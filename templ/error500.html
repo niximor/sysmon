@@ -8,7 +8,7 @@
     <h2>{{ get_class(error) }}</h2>
 
     <div class="alert alert-danger">
-        {{ error.getMessage() }}
+        <p>{{ error.getMessage() }} in <code>{{ error.file }}</code> on line <code>{{ error.line }}</code></p>
     </div>
 
     <h2>Stack trace</h2>

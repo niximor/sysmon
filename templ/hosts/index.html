@@ -24,7 +24,7 @@
                 <tr class="{% if diff > 300 %}danger{% elseif diff > 120 %}warning{% endif %}">
                     <td>
                         <a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}" aria-label="Detail" style="white-space: nowrap;">
-                            <span class="glyphicon glyphicon-search" style="vertical-align: text-top;"></span>
+                            <span class="fa fa-search" style="vertical-align: text-top;"></span>
                             {{ host.hostname }}
                         </a>
                     </td>
@@ -33,7 +33,7 @@
                     <td>{{ host.version }}</td>
                     <td>{{ host.kernel }}</td>
                     <td>{{ host.ip }}</td>
-                    <td><a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" aria-label="History" title="History"><span class="glyphicon glyphicon-time"></span></a></td>
+                    <td><a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" aria-label="History" title="History"><span class="fa fa-history""></span></a></td>
                 </tr>
             {% endfor %}
         </tbody>

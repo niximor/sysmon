@@ -66,7 +66,7 @@ class Alert {
         $where[] = "(`a`.`active` = 1 OR `a`.`timestamp` >= DATE_ADD(NOW(), INTERVAL -7 DAY))";
 
         if (!is_null($server_id)) {
-            $where[] = "`a`.`server_id` <=> ".escape($db, $server_id);
+            $where[] = "`a`.`server_id` = ".escape($db, $server_id);
         }
 
         if (!is_null($check_id)) {
@@ -102,7 +102,10 @@ class Alert {
         }
 
         $where[0] = "`a`.`active` = 1";
-        $where[] = "`a`.`id` < ".$lowest_id;
+
+        if (!is_null($lowest_id)) {
+            $where[] = "`a`.`id` < ".escape($db, $lowest_id);
+        }
 
         $q_active = $db->query("SELECT
             `s`.`hostname`,

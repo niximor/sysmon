@@ -64,7 +64,7 @@
                         <td>{{ alert.getMessage()|raw }}</td>
                         <td>
                             {% if alert.active %}
-                            <a class="btn btn-danger btn-sm" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">Dismiss</a>
+                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">Dismiss</a>
                             {% endif %}
                         </td>
                     </tr>

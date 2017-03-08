@@ -57,7 +57,7 @@
         <tbody>
             {% for stamp in stamps %}
                 <tr{% if stamp.in_alert %} class="danger"{% endif %}>
-                    <td><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}"><span class="glyphicon glyphicon-search" style="vertical-align: text-top"></span> {{ stamp.stamp }}</a></td>
+                    <td><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}"><span class="fa fa-search" style="vertical-align: text-top"></span> {{ stamp.stamp }}</a></td>
                     <td><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></td>
                     <td>
                         {{ stamp.timestamp|datetime("Y-m-d G:i:s") }}

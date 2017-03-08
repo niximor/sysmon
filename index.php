@@ -44,11 +44,11 @@ if (Session::get("user_id")) {
 
     require_once "controllers/ChecksController.php";
     $router->bind("/checks", array("ChecksController", "index"));
-    $router->bind("/checks/<id>", array("ChecksController", "detail"));
     $router->bind("/checks/add", array("ChecksController", "add"));
     $router->bind("/checks/edit/<id>", array("ChecksController", "edit"));
     $router->bind("/checks/toggle/<id>", array("ChecksController", "toggle"));
     $router->bind("/checks/remove/<id>", array("ChecksController", "remove"));
+    $router->bind("/checks/<id>", array("ChecksController", "detail"));
 
     require_once "controllers/AlertTemplatesController.php";
     $router->bind("/settings/alert-templates", array("AlertTemplatesController", "index"));
@@ -96,7 +96,7 @@ if ($route) {
         echo $route->execute();
     } catch (EntityNotFound $e) {
         $ec = new ErrorController();
-        echo $ec->error404();
+        echo $ec->error404($e);
     } catch (Throwable $t) {
         $ec = new ErrorController();
         echo $ec->error500($t);

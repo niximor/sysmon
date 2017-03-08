@@ -9,14 +9,14 @@
 
 <form action="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" method="post" class="form-horizontal">
     <div class="form-group">
-        <label class="col-sm-2 form-label" for="inputName">Name:</label>
+        <label class="col-sm-2 control-label" for="inputName">Name:</label>
         <div class="col-sm-10">
             <input type="text" class="form-control" id="inputName" name="name" value="{{ chart.chart }}" />
         </div>
     </div>
 
     <div class="form-group">
-        <label class="col-sm-2 form-label" for="inputType">Check type:</label>
+        <label class="col-sm-2 control-label" for="inputType">Check type:</label>
         <div class="col-sm-10">
             <select name="type" class="form-control" id="inputType">
                 {% for type in check_types %}
@@ -27,7 +27,7 @@
     </div>
 
     <div class="form-group">
-        <label class="col-sm-2 form-label">Readings:</label>
+        <label class="col-sm-2 control-label">Readings:</label>
         <div class="col-sm-10">
             {% for reading in all_readings %}
             <div class="checkbox">

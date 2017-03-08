@@ -19,7 +19,43 @@ class ChecksController extends TemplatedController {
             $direction = $_REQUEST["direction"];
         }
 
-        $q = $db->query("SELECT `ch`.`id`, `ch`.`enabled`, `ch`.`name`, `ch`.`interval`, `s`.`hostname`, `t`.`name` AS `type`, COUNT(`a`.`id`) AS `alerts` FROM `checks` `ch` JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`) JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`) LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1) GROUP BY `ch`.`id` ORDER BY `".$order."` ".$direction.", `ch`.`name` ".$direction.", `s`.`hostname` ".$direction) or fail($db->error);
+        $where = [];
+
+        if (!empty($_REQUEST["type"])) {
+            $where[] = "`ch`.`type_id` = ".escape($db, $_REQUEST["type"]);
+        }
+
+        if (!empty($_REQUEST["name"])) {
+            $where[] = "`ch`.`name` LIKE '".$db->real_escape_string(strtr($_REQUEST["name"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
+        }
+
+        if (!empty($_REQUEST["host"])) {
+            $where[] = "`s`.`hostname` LIKE '".$db->real_escape_string(strtr($_REQUEST["host"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
+        }
+
+        $query = "SELECT
+                `ch`.`id`,
+                `ch`.`enabled`,
+                `ch`.`name`,
+                `ch`.`interval`,
+                `s`.`hostname`,
+                `t`.`name` AS `type`,
+                COUNT(`a`.`id`) AS `alerts`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
+            JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+        ";
+
+        if (!empty($where)) {
+            $query .= " WHERE ".implode(" AND ", $where);
+        }
+
+        $query .= "
+            GROUP BY `ch`.`id`
+            ORDER BY `".$order."` ".$direction.", `ch`.`name` ".$direction.", `s`.`hostname` ".$direction;
+
+        $q = $db->query($query) or fail($db->error);
 
         $checks = [];
 
@@ -36,7 +72,8 @@ class ChecksController extends TemplatedController {
         }
 
         return $this->renderTemplate("checks/index.html", [
-            "checks" => $checks
+            "checks" => $checks,
+            "types" => $this->loadTypes($db)
         ]);
     }
 
@@ -59,13 +96,15 @@ class ChecksController extends TemplatedController {
 
         $series = [];
 
-        $q = $db->query("SELECT `r`.`name`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -1 DAY) AND NOW() ORDER BY `datetime` ASC");
-        while ($a = $q->fetch_array()) {
-            if (!isset($series[$a["name"]])) {
-                $series[$a["name"]] = [];
-            }
+        if (!empty($readings)) {
+            $q = $db->query("SELECT `r`.`name`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -1 DAY) AND NOW() ORDER BY `datetime` ASC") or fail($db->error);
+            while ($a = $q->fetch_array()) {
+                if (!isset($series[$a["name"]])) {
+                    $series[$a["name"]] = [];
+                }
 
-            $series[$a["name"]][] = [$a["timestamp"], $a["value"]];
+                $series[$a["name"]][] = [$a["timestamp"], $a["value"]];
+            }
         }
 
         return $this->renderTemplate("checks/detail.html", [
@@ -302,7 +341,9 @@ class ChecksController extends TemplatedController {
 
         if (isset($_REQUEST["params"]) && isset($_REQUEST["values"])) {
             for ($i = 0; $i < min(count($_REQUEST["params"]), count($_REQUEST["values"])); ++$i) {
-                $params[$_REQUEST["params"][$i]] = $_REQUEST["values"][$i];
+                if (!empty($_REQUEST["params"][$i]) && !empty($_REQUEST["values"][$i])) {
+                    $params[$_REQUEST["params"][$i]] = $_REQUEST["values"][$i];
+                }
             }
 
             $_REQUEST["params"] = $params;

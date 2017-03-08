@@ -18,7 +18,7 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-6">
+    <div class="col-sm-{% if series %}6{% else %}12{% endif %}">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
                 <h3 class="panel-title">Overview</h3>
@@ -47,6 +47,7 @@
         </div>
     </div>
 
+    {% if series %}
     <div class="col-sm-6">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
@@ -88,6 +89,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
 <div class="panel panel-default">
@@ -111,7 +113,7 @@
                         <td>{{ alert.getMessage()|raw }}</td>
                         <td class="td-shrink">
                             {% if alert.active %}
-                            <a class="btn btn-danger btn-sm" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">Dismiss</a>
+                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">Dismiss</a>
                             {% endif %}
                         </td>
                     </tr>
