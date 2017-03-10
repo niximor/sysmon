@@ -7,15 +7,48 @@
     <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
 </ol>
 
-<div class="btn-group" role="group">
-    {% if check.enabled %}
-        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
-    {% else %}
-        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
-    {% endif %}
-    <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
-    <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+<div class="btn-toolbar">
+    <div class="btn-group" role="group">
+        {% if check.enabled %}
+            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
+        {% else %}
+            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+        {% endif %}
+        <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+        <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+    </div>
+
+    <div class="btn-group" role="group">
+        <a href="" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
+    </div>
 </div>
+
+<script>
+    var formatters = {
+        "raw": function(val, axis) {
+            return val.toFixed(axis.tickDecimals);
+        },
+
+        "time": function(val, axis) {
+            return val.toFixed(axis.tickDecimals) + " s";
+        },
+
+        "bytes": function(val, axis) {
+            var i = 0;
+            while (val >= 1024) {
+                val /= 1024;
+                ++i;
+            }
+
+            return val.toFixed(axis.tickDecimals) + " " + ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"][i];
+        },
+
+        "percent": function(val, axis) {
+            return val.toFixed(axis.tickDecimals) + "%";
+        }
+    }
+    var formatter = formatters["{{ format|default('raw') }}"]
+</script>
 
 <div class="row">
     <div class="col-sm-{% if series %}6{% else %}12{% endif %}">
@@ -31,6 +64,9 @@
                     <dt>Server:</dt>
                     <dd>{{ check.hostname }}</dd>
 
+                    <dt>Group:</dt>
+                    <dd>{% if check.group %}{{ check.group }}{% else %}<span class="text-muted">None</span>{% endif %}</dd>
+
                     <dt>Type:</dt>
                     <dd>{{ check.type }}</dd>
 
@@ -44,6 +80,30 @@
                     <dd>{{ check.last_check|datetime }}</dd>
                 </dl>
             </div>
+            {% if stats %}
+            <table class="panel-body table table-compacted table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 52%">Reading</th>
+                        <th style="width: 12%" class="text-right">Cur</th>
+                        <th style="width: 12%" class="text-right">Min</th>
+                        <th style="width: 12%" class="text-right">Max</th>
+                        <th style="width: 12%" class="text-right">Avg</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in stats %}
+                    <tr>
+                        <td>{{ reading.name }}</td>
+                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.cur|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.min|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.max|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.avg|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
         </div>
     </div>
 
@@ -153,8 +213,13 @@
         }
     };
     var range = ranges["{{ granularity }}"];
+    var precision = 0;
 
     {% for name, values in series %}
+        if ({{ reading_settings[name].precision }} > precision) {
+            precision = {{ reading_settings[name].precision }};
+        }
+
         series.push({
             label: "{{ name }}",
             data: [
@@ -170,6 +235,10 @@
             mode: "time",
             min: range.min,
             max: range.max
+        },
+        yaxis: {
+            tickFormatter: formatter,
+            tickDecimals: precision
         },
         grid: {
             borderWidth: 0

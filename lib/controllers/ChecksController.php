@@ -33,6 +33,10 @@ class ChecksController extends TemplatedController {
             $where[] = "`s`.`hostname` LIKE '".$db->real_escape_string(strtr($_REQUEST["host"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
         }
 
+        if (!empty($_REQUEST["group"])) {
+            $where[] = "`ch`.`group_id` = ".escape($db, $_REQUEST["group"]);
+        }
+
         $query = "SELECT
                 `ch`.`id`,
                 `ch`.`enabled`,
@@ -40,10 +44,12 @@ class ChecksController extends TemplatedController {
                 `ch`.`interval`,
                 `s`.`hostname`,
                 `t`.`name` AS `type`,
-                COUNT(`a`.`id`) AS `alerts`
+                COUNT(`a`.`id`) AS `alerts`,
+                `g`.`name` AS `group`
             FROM `checks` `ch`
             JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
             JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+            LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
             LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
         ";
 
@@ -53,7 +59,7 @@ class ChecksController extends TemplatedController {
 
         $query .= "
             GROUP BY `ch`.`id`
-            ORDER BY `".$order."` ".$direction.", `ch`.`name` ".$direction.", `s`.`hostname` ".$direction;
+            ORDER BY `g`.`name` ".$direction.", `".$order."` ".$direction.", `ch`.`name` ".$direction.", `s`.`hostname` ".$direction;
 
         $q = $db->query($query) or fail($db->error);
 
@@ -68,19 +74,35 @@ class ChecksController extends TemplatedController {
                 "interval" => $a["interval"],
                 "hostname" => $a["hostname"],
                 "alerts" => $a["alerts"],
+                "group" => $a["group"],
             ];
         }
 
         return $this->renderTemplate("checks/index.html", [
             "checks" => $checks,
-            "types" => $this->loadTypes($db)
+            "types" => $this->loadTypes($db),
+            "groups" => $this->loadGroups($db)
         ]);
     }
 
     public function detail($id) {
         $db = connect();
 
-        $q = $db->query("SELECT `ch`.`id`, `ch`.`enabled`, `ch`.`name`, `ch`.`interval`, `ch`.`last_check`, `s`.`hostname`, `t`.`name` AS `type`, `t`.`id` AS `type_id` FROM `checks` `ch` JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`) JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`) WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
+        $q = $db->query("SELECT
+                `ch`.`id`,
+                `ch`.`enabled`,
+                `ch`.`name`,
+                `ch`.`interval`,
+                `ch`.`last_check`,
+                `s`.`hostname`,
+                `t`.`name` AS `type`,
+                `t`.`id` AS `type_id`,
+                `g`.`name` AS `group`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
+            JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+            LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
+            WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
         $check = $q->fetch_array();
 
         if (!$check) {
@@ -95,9 +117,53 @@ class ChecksController extends TemplatedController {
         list($chart, $readings) = $this->selectChart($db, $check["type_id"]);
 
         $series = [];
+        $reading_settings = [];
+
+        $interval = NULL;
+        switch ($granularity) {
+            case "daily":
+                $interval = "1 DAY";
+                break;
+
+            case "weekly":
+                $interval = "1 WEEK";
+                break;
+
+            case "monthly":
+                $interval = "1 MONTH";
+                break;
+
+            case "yearly":
+                $interval = "1 YEAR";
+                break;
+        }
+
+        // Load statistics
+        $stats = [];
+        $format = "raw";
+        $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, `r`.`precision`, `r`.`id`, MIN(`v`.`value`) AS `min`, MAX(`v`.`value`) AS `max`, AVG(`v`.`value`) AS `avg` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`) WHERE `check_id` = ".escape($db, $check["id"])." AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() GROUP BY `v`.`reading_id` ORDER BY `r`.`name` ASC") or fail($db->error);
+        while ($a = $q->fetch_array()) {
+            $qcur = $db->query("SELECT `value` FROM `readings_".$granularity."` WHERE `reading_id` = ".escape($db, $a["id"])." ORDER BY `id` DESC LIMIT 1") or fail($db->error);
+            $cur = $qcur->fetch_array();
+
+            $stats[] = [
+                "name" => $a["name"],
+                "cur" => $cur["value"],
+                "min" => $a["min"],
+                "max" => $a["max"],
+                "avg" => $a["avg"]
+            ];
+
+            $reading_settings[$a["name"]] = [
+                "data_type" => $a["data_type"],
+                "precision" => $a["precision"]
+            ];
+            $format = $a["data_type"];
+        }
 
         if (!empty($readings)) {
-            $q = $db->query("SELECT `r`.`name`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -1 DAY) AND NOW() ORDER BY `datetime` ASC") or fail($db->error);
+            $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `datetime` ASC") or fail($db->error);
+
             while ($a = $q->fetch_array()) {
                 if (!isset($series[$a["name"]])) {
                     $series[$a["name"]] = [];
@@ -112,8 +178,11 @@ class ChecksController extends TemplatedController {
             "alerts" => Alert::loadLatest($db, NULL, $check["id"]),
             "series" => $series,
             "chart" => $chart,
+            "format" => $format,
+            "reading_settings" => $reading_settings,
             "granularity" => $granularity,
-            "charts" => $this->loadAllCharts($db, $check["type_id"])
+            "charts" => $this->loadAllCharts($db, $check["type_id"]),
+            "stats" => $stats,
         ]);
     }
 
@@ -125,7 +194,27 @@ class ChecksController extends TemplatedController {
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $interval = parse_duration($_REQUEST["interval"]);
 
-            $db->query("INSERT INTO `checks` (`server_id`, `interval`, `last_check`, `name`, `type_id`, `params`, `enabled`) VALUES (".escape($db, $_POST["server"]).", ".escape($db, $interval).", NULL, ".escape($db, $_POST["name"]).", ".escape($db, $_POST["type"]).", ".escape($db, json_encode($params)).", 1)") or fail($db->error);
+            $group_id = $this->resolveGroup($db, $_REQUEST["group"]);
+
+            $db->query("INSERT INTO `checks` (
+                    `server_id`,
+                    `interval`,
+                    `last_check`,
+                    `name`,
+                    `type_id`,
+                    `params`,
+                    `enabled`,
+                    `group_id`
+                ) VALUES (
+                    ".escape($db, $_POST["server"]).",
+                    ".escape($db, $interval).",
+                    NULL,
+                    ".escape($db, $_POST["name"]).",
+                    ".escape($db, $_POST["type"]).",
+                    ".escape($db, json_encode($params)).",
+                    1,
+                    ".escape($db, $group_id)."
+                )") or fail($db->error);
             $db->commit();
 
             Message::create(Message::SUCCESS, "Check has been created.");
@@ -136,14 +225,25 @@ class ChecksController extends TemplatedController {
 
         return $this->renderTemplate("checks/add.html", [
             "servers" => $this->loadServers($db),
-            "types" => $this->loadTypes($db)
+            "types" => $this->loadTypes($db),
+            "groups" => $this->loadGroups($db)
         ]);
     }
 
     public function edit($id) {
         $db = connect();
 
-        $q = $db->query("SELECT `id`, `server_id`, `interval`, `last_check`, `name`, `type_id`, `params`, `enabled` FROM `checks` WHERE `id` = ".escape($db, $id)) or fail($db->error);
+        $q = $db->query("SELECT
+                `ch`.`id`,
+                `ch`.`server_id`,
+                `ch`.`interval`,
+                `ch`.`last_check`,
+                `ch`.`name`,
+                `ch`.`type_id`,
+                `ch`.`params`,
+                `ch`.`enabled`,
+                `g`.`name` AS `group`
+            FROM `checks` `ch` LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`) WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
         $a = $q->fetch_array();
 
         if (!$a) {
@@ -154,7 +254,17 @@ class ChecksController extends TemplatedController {
             $params = $this->combineParams();
             $interval = parse_duration($_REQUEST["interval"]);
 
-            $db->query("UPDATE `checks` SET `server_id` = ".escape($db, $_POST["server"]).", `interval` = ".escape($db, $interval).", `name` = ".escape($db, $_POST["name"]).", `type_id` = ".escape($db, $_POST["type"]).", `params` = ".escape($db, json_encode($params))." WHERE `id` = ".escape($db, $id));
+            $group_id = $this->resolveGroup($db, $_REQUEST["group"]);
+
+            $db->query("UPDATE `checks`
+                SET
+                    `server_id` = ".escape($db, $_POST["server"]).",
+                    `interval` = ".escape($db, $interval).",
+                    `name` = ".escape($db, $_POST["name"]).",
+                    `type_id` = ".escape($db, $_POST["type"]).",
+                    `params` = ".escape($db, json_encode($params)).",
+                    `group_id` = ".escape($db, $group_id)."
+                WHERE `id` = ".escape($db, $id));
             $db->commit();
 
             Message::create(Message::SUCCESS, "Check has been modified.");
@@ -176,7 +286,8 @@ class ChecksController extends TemplatedController {
         return $this->renderTemplate("checks/edit.html", [
             "check" => $a,
             "servers" => $this->loadServers($db),
-            "types" => $this->loadTypes($db)
+            "types" => $this->loadTypes($db),
+            "groups" => $this->loadGroups($db)
         ]);
     }
 
@@ -392,5 +503,39 @@ class ChecksController extends TemplatedController {
         }
 
         return $charts;
+    }
+
+    protected function loadGroups(mysqli $db) {
+        $q = $db->query("SELECT `id`, `name` FROM `check_groups` ORDER BY `name` ASC");
+        $groups = [];
+        while ($a = $q->fetch_array()) {
+            $groups[] = [
+                "id" => $a["id"],
+                "name" => $a["name"]
+            ];
+        }
+        return $groups;
+    }
+
+    protected function resolveGroup(mysqli $db, $group) {
+        if (is_null($group)) {
+            return NULL;
+        }
+
+        $group = trim($group);
+        if (empty($group)) {
+            return NULL;
+        }
+
+        $q = $db->query("SELECT `id` FROM `check_groups` WHERE `name` = ".escape($db, $group));
+        if ($a = $q->fetch_array()) {
+            return $a["id"];
+        } else {
+            $db->query("INSERT INTO `check_groups` (`name`) VALUES (".escape($db, $group).")");
+            $id = $db->insert_id;
+            $db->commit();
+
+            return $id;
+        }
     }
 }
