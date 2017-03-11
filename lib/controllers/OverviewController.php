@@ -18,7 +18,7 @@ class OverviewController extends TemplatedController {
     public function dismiss($id) {
         $db = connect();
 
-        $db->query("UPDATE `alerts` SET `active` = 0 WHERE `id` = ".escape($db, $id)." AND `active` > 0");
+        $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0 WHERE `id` = ".escape($db, $id)." AND `active` > 0");
         if ($db->affected_rows > 0) {
             Message::create(Message::SUCCESS, "Alert has been dismissed.");
         }

@@ -143,7 +143,7 @@ class ChecksController extends TemplatedController {
         $format = "raw";
         $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, `r`.`precision`, `r`.`id`, MIN(`v`.`value`) AS `min`, MAX(`v`.`value`) AS `max`, AVG(`v`.`value`) AS `avg` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`) WHERE `check_id` = ".escape($db, $check["id"])." AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() GROUP BY `v`.`reading_id` ORDER BY `r`.`name` ASC") or fail($db->error);
         while ($a = $q->fetch_array()) {
-            $qcur = $db->query("SELECT `value` FROM `readings_".$granularity."` WHERE `reading_id` = ".escape($db, $a["id"])." ORDER BY `id` DESC LIMIT 1") or fail($db->error);
+            $qcur = $db->query("SELECT `value` FROM `readings_".$granularity."` WHERE `check_id` = ".escape($db, $check["id"])." AND `reading_id` = ".escape($db, $a["id"])." ORDER BY `datetime` DESC LIMIT 1") or fail($db->error);
             $cur = $qcur->fetch_array();
 
             $stats[] = [
@@ -162,7 +162,7 @@ class ChecksController extends TemplatedController {
         }
 
         if (!empty($readings)) {
-            $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `datetime` ASC") or fail($db->error);
+            $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `v`.`check_id` ASC, `v`.`reading_id` ASC, `v`.`datetime` ASC") or fail($db->error);
 
             while ($a = $q->fetch_array()) {
                 if (!isset($series[$a["name"]])) {
@@ -183,6 +183,103 @@ class ChecksController extends TemplatedController {
             "granularity" => $granularity,
             "charts" => $this->loadAllCharts($db, $check["type_id"]),
             "stats" => $stats,
+        ]);
+    }
+
+    public function charts($id) {
+        $db = connect();
+        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id` FROM `checks` `ch` WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
+
+        $check = $q->fetch_array();
+        if (!$check) {
+            throw new EntityNotFound("Check was not found.");
+        }
+
+        $charts = $this->loadAllCharts($db, $check["type_id"]);
+
+        return $this->renderTemplate("checks/charts.html", [
+            "check" => $check,
+            "charts" => $charts,
+        ]);
+    }
+
+    public function chart_detail($check_id, $chart_id) {
+        $db = connect();
+
+        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id` FROM `checks` `ch` WHERE `ch`.`id` = ".escape($db, $check_id)) or fail($db->error);
+
+        $check = $q->fetch_array();
+        if (!$check) {
+            throw new EntityNotFound("Check was not found.");
+        }
+
+        $q = $db->query("SELECT `ch`.`id`, `ch`.`name` FROM `check_charts` `ch` WHERE `id` = ".escape($db, $chart_id)." AND `check_type_id` = ".escape($db, $check["type_id"])) or fail($db->error);
+        $chart = $q->fetch_array();
+
+        if (!$chart) {
+            throw new EntityNotFound("Chart was not found.");
+        }
+
+        return $this->renderTemplate("checks/chart_detail.html", [
+            "check" => $check,
+            "chart" => $chart
+        ]);
+    }
+
+    public function chart_data(int $id, int $chart_id) {
+        $granularity = "daily";
+        if (isset($_REQUEST["granularity"]) && in_array($_REQUEST["granularity"], ["daily", "weekly", "monthly", "yearly"])) {
+            $granularity = $_REQUEST["granularity"];
+        }
+
+        $interval = NULL;
+        switch ($granularity) {
+            case "daily":
+                $interval = "1 DAY";
+                break;
+
+            case "weekly":
+                $interval = "1 WEEK";
+                break;
+
+            case "monthly":
+                $interval = "1 MONTH";
+                break;
+
+            case "yearly":
+                $interval = "1 YEAR";
+                break;
+        }
+
+        $db = connect();
+
+        $readings = [];
+
+        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`data_type`, `r`.`precision` FROM `check_chart_readings` `cr` JOIN `readings` `r` ON (`r`.`id` = `cr`.`reading_id`) WHERE `cr`.`chart_id` = ".escape($db, $chart_id));
+        while ($a = $q->fetch_array()) {
+            $readings[(int)$a["id"]] = [
+                "id" => (int)$a["id"],
+                "name" => $a["name"],
+                "data_type" => $a["data_type"],
+                "precision" => (int)$a["precision"]
+            ];
+        }
+
+        $series = [];
+
+        if (!empty($readings)) {
+            $q = $db->query("SELECT `v`.`reading_id`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` WHERE `v`.`check_id` = ".escape($db, $id)." AND `v`.`reading_id` IN (".implode(",", array_map(function($r) { return $r["id"]; }, $readings)).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `check_id` ASC, `reading_id` ASC, `datetime` ASC") or fail($db->error);
+            while ($a = $q->fetch_array()) {
+                if (!isset($series[$a["reading_id"]])) {
+                    $series[(int)$a["reading_id"]] = [];
+                }
+                $series[(int)$a["reading_id"]][] = [(int)$a["timestamp"], (float)$a["value"]];
+            }
+        }
+
+        return json_encode([
+            "readings" => $readings,
+            "series" => $series
         ]);
     }
 

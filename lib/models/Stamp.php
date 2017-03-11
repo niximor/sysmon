@@ -1,5 +1,7 @@
 <?php
 
+require_once "exceptions/EntityNotFound.php";
+
 class Stamp {
     public $id;
     public $stamp;
@@ -37,6 +39,36 @@ class Stamp {
                 $this->time_remaining_percent = ($this->alert_after - $this->ago) * 100.0 / $this->alert_after;
             }
         }
+    }
+
+    public static function put($name, $server) {
+        $db = connect();
+        if (is_string($server)) {
+            $q = $db->query("SELECT `id` FROM `servers` WHERE `hostname` = ".escape($db, $server)) or fail($db->error);
+            $a = $q->fetch_array();
+
+            if (!$a) {
+                throw new EntityNotFound("Server was not found.");
+            }
+            $server = $a["id"];
+        }
+
+        $q = $db->query("SELECT `id` FROM `stamps` WHERE `stamp` = ".escape($db, $name)." AND `server_id` = ".escape($db, $server)) or fail($db->error);
+        if ($a = $q->fetch_array()) {
+            $db->query("UPDATE `stamps` SET `timestamp` = NOW() WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+        } else {
+            $db->query("INSERT INTO `stamps` (`stamp`, `server_id`, `timestamp`) VALUES (".escape($db, $name).", ".escape($db, $server).", NOW())") or fail($db->error);
+        }
+
+        $q = $db->query("SELECT `id`, `data` FROM `alerts` WHERE `server_id` = ".escape($db, $server)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
+        while ($a = $q->fetch_array()) {
+            $data = json_decode($a["data"]);
+            if ($data->stamp == $name) {
+                $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+            }
+        }
+
+        $db->commit();
     }
 
     public function __toString() {

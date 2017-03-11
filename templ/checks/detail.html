@@ -18,35 +18,14 @@
         <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
     </div>
 
+    {% if charts %}
     <div class="btn-group" role="group">
-        <a href="" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
+        <a href="{{ url_for(['ChecksController', 'charts'], {'id': check.id}) }}" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
     </div>
+    {% endif %}
 </div>
 
 <script>
-    var formatters = {
-        "raw": function(val, axis) {
-            return val.toFixed(axis.tickDecimals);
-        },
-
-        "time": function(val, axis) {
-            return val.toFixed(axis.tickDecimals) + " s";
-        },
-
-        "bytes": function(val, axis) {
-            var i = 0;
-            while (val >= 1024) {
-                val /= 1024;
-                ++i;
-            }
-
-            return val.toFixed(axis.tickDecimals) + " " + ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"][i];
-        },
-
-        "percent": function(val, axis) {
-            return val.toFixed(axis.tickDecimals) + "%";
-        }
-    }
     var formatter = formatters["{{ format|default('raw') }}"]
 </script>
 
@@ -141,11 +120,13 @@
                 </ul>
             </div>
             <div class="panel-body">
-                <div class="chart-container">
-                    <div class="chart">
-                         <div id="chart"></div>
+                <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id }) }}">
+                    <div class="chart-container">
+                        <div class="chart">
+                             <div id="chart"></div>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
@@ -191,28 +172,6 @@
 <script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
 <script>
     var series = [];
-
-    var now = new Date().getTime()
-
-    var ranges = {
-        "daily": {
-            "min": now - 86400 * 1000,
-            "max": now
-        },
-        "weekly": {
-            "min": now - (7 * 86400) * 1000,
-            "max": now
-        },
-        "monthly": {
-            "min": now - (30 * 86400) * 1000,
-            "max": now
-        },
-        "yearly": {
-            "min": now - (365 * 86400) * 1000,
-            "max": now
-        }
-    };
-    var range = ranges["{{ granularity }}"];
     var precision = 0;
 
     {% for name, values in series %}
@@ -230,30 +189,7 @@
         });
     {% endfor %}
 
-    $.plot("#chart", series, {
-        xaxis: {
-            mode: "time",
-            min: range.min,
-            max: range.max
-        },
-        yaxis: {
-            tickFormatter: formatter,
-            tickDecimals: precision
-        },
-        grid: {
-            borderWidth: 0
-        },
-        series: {
-            lines: {
-                lineWidth: 1
-            },
-            shadowSize: 0
-        },
-        legend: {
-            show: true,
-        },
-        colors: ["#00cc00", "#0066b3", "#ff8000", "#ffcc00", "#330099", "#990099", "#ccff00", "#ff0000", "#808080"]
-    });
+    chart("#chart", series, "{{ granularity }}", formatter, precision);
 </script>
 
 {% endblock %}

@@ -61,7 +61,7 @@
                     <td><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></td>
                     <td>
                         {{ stamp.timestamp|datetime("Y-m-d G:i:s") }}
-                        {% if stamp.alert_after %}<br />{{ stamp.ago | duration }} ago{% endif %}
+                        <br />{{ stamp.ago | duration }} ago
                     </td>
                     <td>
                         {{ stamp.alert_after|duration }}<br />

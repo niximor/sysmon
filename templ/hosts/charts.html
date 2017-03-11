@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hdd-o"></span> {{ host.hostname }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['HostsController', 'index']) }}">Hosts</a></li>
+    <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
+    <li><a href="{{ url_for(['HostsController', 'charts'], {'id': host.id}) }}">Charts</a></li>
+</ol>
+
+<div class="btn-group">
+    <a href="#group0" class="btn btn-default">Ungrouped</a>
+    {% set last_group = "" %}
+    {% for chart in charts %}
+        {% if last_group != chart.group %}
+            <a href="#group{{ chart.id }}" class="btn btn-default">{{ chart.group }}</a>
+            {% set last_group = chart.group %}
+        {% endif %}
+    {% endfor %}
+</div>
+
+<script>
+var charts = [];
+</script>
+
+{% set last_group = "" %}
+{% for chart in charts %}
+    {% if chart.group != last_group %}
+        <h2 id="group{{ chart.id }}">{{ chart.group }}</h2>
+        {% set last_group = chart.group %}
+    {% endif %}
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">{{ chart.check }} - {{ chart.name }}</h3>
+    </div>
+    <div class="panel-body">
+        <div class="col-sm-6">
+            <h4>Daily</h4>
+            <div class="chart-container">
+                <div class="chart">
+                     <div id="chart_{{ chart.check_id }}_{{ chart.id }}_daily"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6">
+            <h4>Weekly</h4>
+            <div class="chart-container">
+                <div class="chart">
+                     <div id="chart_{{ chart.check_id }}_{{ chart.id }}_weekly"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        charts.push({"id": {{ chart.id }}, "check_id": {{ chart.check_id }}, "container": "#chart_{{ chart.check_id }}_{{ chart.id }}_daily", "granularity": "daily"});
+        charts.push({"id": {{ chart.id }}, "check_id": {{ chart.check_id }}, "container": "#chart_{{ chart.check_id }}_{{ chart.id }}_weekly", "granularity": "weekly"});
+    </script>
+</div>
+{% endfor %}
+
+<script src="{{ url_for('static', 'flot/jquery.flot.min.js') }}"></script>
+<script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
+<script>
+$(function(){
+    var url_base = "{{ url_for(['ChecksController', 'chart_data'], {'id': "-check-id-", 'chart_id': "-chart_id-"} ) }}";
+    charts_multiple(charts, url_base);
+});
+</script>
+
+{% endblock %}

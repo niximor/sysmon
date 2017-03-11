@@ -15,7 +15,7 @@ a.box:hover { color: initial; }
 
 .chart-container { position: relative; padding-top: 56.25%; width: 100%; }
 .chart-container .chart { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
-#chart { width: 100%; height: 100%; }
+.chart-container .chart>div { width: 100%; height: 100%; }
 
 .panel-tool-options .dropdown { line-height: 1em; }
 .panel-tool-options .btn { margin-top: -14px; margin-bottom: -7px; }

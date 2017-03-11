@@ -123,6 +123,48 @@ class HostsController extends TemplatedController implements CronInterface {
         ]);
     }
 
+    public function charts($id) {
+        $db = connect();
+
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `id` = ".escape($db, $id));
+        $server = $q->fetch_array();
+
+        if (!$server) {
+            throw new EntityNotFoun("Host does not exists.");
+        }
+
+        $q = $db->query("SELECT
+            `check_charts`.`id`,
+            `check_charts`.`name`,
+            `checks`.`name` AS `check`,
+            `checks`.`id` AS `check_id`,
+            `check_groups`.`name` AS `group`
+            FROM `checks`
+            JOIN `check_charts` ON (`checks`.`type_id` = `check_charts`.`check_type_id`)
+            LEFT JOIN `check_groups` ON (`checks`.`group_id` = `check_groups`.`id`)
+            WHERE `checks`.`server_id` = ".escape($db, $server["id"])."
+            ORDER BY
+                `check_groups`.`name` ASC,
+                `checks`.`name` ASC,
+                `check_charts`.`name` ASC") or fail($db->error);
+
+        $charts = [];
+        while ($a = $q->fetch_array()) {
+            $charts[] = [
+                "id" => $a["id"],
+                "name" => $a["name"],
+                "check" => $a["check"],
+                "check_id" => $a["check_id"],
+                "group" => $a["group"]
+            ];
+        }
+
+        return $this->renderTemplate("hosts/charts.html", [
+            "host" => $server,
+            "charts" => $charts,
+        ]);
+    }
+
     public function cron(mysqli $db) {
         $db = connect();
 

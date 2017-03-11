@@ -34,6 +34,7 @@ if (Session::get("user_id")) {
     $router->bind("/hosts", array("HostsController", "index"));
     $router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
     $router->bind("/hosts/<id>/history", array("HostsController", "history"));
+    $router->bind("/hosts/<id>/charts", array("HostsController", "charts"));
 
     require_once "controllers/StampsController.php";
     $router->bind("/stamps", array("StampsController", "index"));
@@ -45,10 +46,13 @@ if (Session::get("user_id")) {
     require_once "controllers/ChecksController.php";
     $router->bind("/checks", array("ChecksController", "index"));
     $router->bind("/checks/add", array("ChecksController", "add"));
-    $router->bind("/checks/edit/<id>", array("ChecksController", "edit"));
-    $router->bind("/checks/toggle/<id>", array("ChecksController", "toggle"));
-    $router->bind("/checks/remove/<id>", array("ChecksController", "remove"));
+    $router->bind("/checks/<id>/edit", array("ChecksController", "edit"));
+    $router->bind("/checks/<id>/toggle", array("ChecksController", "toggle"));
+    $router->bind("/checks/<id>/remove", array("ChecksController", "remove"));
+    $router->bind("/checks/<id>/charts", array("ChecksController", "charts"));
     $router->bind("/checks/<id>", array("ChecksController", "detail"));
+    $router->bind("/checks/<check_id>/charts/<chart_id>", array("ChecksController", "chart_detail"));
+    $router->bind("/checks/<id>/chart-data/<chart_id>", array("ChecksController", "chart_data"));
 
     require_once "controllers/AlertTemplatesController.php";
     $router->bind("/settings/alert-templates", array("AlertTemplatesController", "index"));
