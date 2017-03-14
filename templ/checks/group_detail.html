@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block main %}
+<h1>{{ group.name }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'group_detail'], {'group_id': group.id}) }} ">{{ group.name }}</a></li>
+</ol>
+
+<script>
+var charts = [];
+</script>
+{% set last_id = 0 %}
+{% for check in checks %}
+    {% if last_id != check.id %}
+        {% if last_id != 0 %}
+            </div>
+        </div>
+        {% endif %}
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <div class="col-sm-3"><h2 class="panel-title">{{ check.name }}</h2></div>
+                <div class="col-sm-3"><strong>Host:</strong> {{ check.hostname }}</div>
+                <div class="col-sm-3"><strong>Type:</strong> {{ check.type }}</div>
+                <div class="col-sm-3"><strong>Interval:</strong> {{ check.interval|duration }}</div>
+            </div>
+            <div class="panel-body">
+        {% set last_id = check.id %}
+    {% endif %}
+
+    {% if check.chart_id %}
+    <h3>{{ check.chart_name }}</h3>
+    <div class="row">
+        <div class="col-sm-6">
+            <h4>Daily</h3>
+            <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': check.chart_id }) }}">
+                <div class="chart-container">
+                    <div class="chart">
+                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_daily"></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-sm-6">
+            <h4>Weekly</h3>
+            <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.chart_id }) }}">
+                <div class="chart-container">
+                    <div class="chart">
+                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_weekly"></div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+    <script>
+        charts.push({"id": {{ check.chart_id }}, "check_id": {{ check.id }}, "container": "#chart_{{ check.id }}_{{ check.chart_id }}_daily", "granularity": "daily"});
+        charts.push({"id": {{ check.chart_id }}, "check_id": {{ check.id }}, "container": "#chart_{{ check.id }}_{{ check.chart_id }}_weekly", "granularity": "weekly"});
+    </script>
+    {% else %}
+    <div class="well">
+        No charts for this check type.
+    </div>
+    {% endif %}
+{% endfor %}
+{% if last_id != 0 %}
+            </div>
+        </div>
+{% endif %}
+
+<script src="{{ url_for('static', 'flot/jquery.flot.min.js') }}"></script>
+<script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
+<script>
+$(function(){
+    var url_base = "{{ url_for(['ChecksController', 'chart_data'], {'id': "-check-id-", 'chart_id': "-chart_id-"} ) }}";
+    charts_multiple(charts, url_base);
+});
+</script>
+
+{% endblock %}

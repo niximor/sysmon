@@ -74,10 +74,10 @@
                     {% for reading in stats %}
                     <tr>
                         <td>{{ reading.name }}</td>
-                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.cur|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.min|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.max|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.avg|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.cur|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.min|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.max|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
+                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.avg|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
                     </tr>
                     {% endfor %}
                 </tbody>

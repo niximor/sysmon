@@ -84,7 +84,7 @@
         {% for check in checks %}
             {% if check.group != last_group %}
                 <tr>
-                    <th colspan="6">{{ check.group }}</th>
+                    <th colspan="6"><a href="{{ url_for(['ChecksController', 'group_detail'], {'group_id': check.group_id}) }}">{{ check.group }}</a></th>
                 </tr>
                 {% set last_group = check.group %}
             {% endif %}
@@ -103,6 +103,10 @@
                     <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
                     <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
                 </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="6"><div class="well">No checks defined.</div></td>
             </tr>
         {% endfor %}
     </tbody>

@@ -46,6 +46,7 @@ if (Session::get("user_id")) {
     require_once "controllers/ChecksController.php";
     $router->bind("/checks", array("ChecksController", "index"));
     $router->bind("/checks/add", array("ChecksController", "add"));
+    $router->bind("/checks/groups/<group_id>", array("ChecksController", "group_detail"));
     $router->bind("/checks/<id>/edit", array("ChecksController", "edit"));
     $router->bind("/checks/<id>/toggle", array("ChecksController", "toggle"));
     $router->bind("/checks/<id>/remove", array("ChecksController", "remove"));

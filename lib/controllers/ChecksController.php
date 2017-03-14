@@ -45,7 +45,8 @@ class ChecksController extends TemplatedController {
                 `s`.`hostname`,
                 `t`.`name` AS `type`,
                 COUNT(`a`.`id`) AS `alerts`,
-                `g`.`name` AS `group`
+                `g`.`name` AS `group`,
+                `ch`.`group_id`
             FROM `checks` `ch`
             JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
             JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
@@ -75,6 +76,7 @@ class ChecksController extends TemplatedController {
                 "hostname" => $a["hostname"],
                 "alerts" => $a["alerts"],
                 "group" => $a["group"],
+                "group_id" => $a["group_id"],
             ];
         }
 
@@ -223,6 +225,57 @@ class ChecksController extends TemplatedController {
         return $this->renderTemplate("checks/chart_detail.html", [
             "check" => $check,
             "chart" => $chart
+        ]);
+    }
+
+    public function group_detail($group_id) {
+        $db = connect();
+
+        $q = $db->query("SELECT `id`, `name` FROM `check_groups` WHERE `id` = ".escape($db, $group_id)) or fail($db->error);
+        $group = $q->fetch_array();
+
+        if (!$group) {
+            throw new EntityNotFound("Chart group was not found.");
+        }
+
+        $query = "SELECT
+                `ch`.`id`,
+                `ch`.`enabled`,
+                `ch`.`name`,
+                `ch`.`interval`,
+                `s`.`hostname`,
+                `t`.`name` AS `type`,
+                COUNT(`a`.`id`) AS `alerts`,
+                `check_charts`.`id` AS `chart_id`,
+                `check_charts`.`name` AS `chart_name`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
+            JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+            LEFT JOIN `check_charts` ON (`check_charts`.`check_type_id` = `ch`.`type_id`)
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+            WHERE `ch`.`group_id` = ".escape($db, $group["id"])."
+            GROUP BY `ch`.`id`, `check_charts`.`id`
+            ORDER BY `ch`.`name` ASC, `s`.`hostname` ASC, `ch`.`name` ASC";
+        $q = $db->query($query) or fail($db->error);
+
+        $checks = [];
+        while ($a = $q->fetch_array()) {
+            $checks[] = [
+                "id" => $a["id"],
+                "enabled" => $a["enabled"],
+                "name" => $a["name"],
+                "type" => $a["type"],
+                "interval" => $a["interval"],
+                "hostname" => $a["hostname"],
+                "alerts" => $a["alerts"],
+                "chart_name" => $a["chart_name"],
+                "chart_id" => $a["chart_id"]
+            ];
+        }
+
+        return $this->renderTemplate("checks/group_detail.html", [
+            "group" => $group,
+            "checks" => $checks,
         ]);
     }
 
