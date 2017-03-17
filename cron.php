@@ -98,6 +98,8 @@ try {
     }
 
     $db->commit();
+
+    Stamp::put("sysmon_cron");
 } catch (Throwable $e) {
     $db->rollback();
 

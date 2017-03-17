@@ -15,7 +15,7 @@ class StampsController extends TemplatedController implements CronInterface {
 
         $where = [];
 
-        $query = "SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after`, DATE_ADD(`s`.`timestamp`, INTERVAL `s`.`alert_after` SECOND) < NOW() AS `in_alert` FROM `stamps` `s` JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`)";
+        $query = "SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after`, DATE_ADD(`s`.`timestamp`, INTERVAL `s`.`alert_after` SECOND) < NOW() AS `in_alert` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`)";
 
         if (isset($_REQUEST["host"]) && !empty($_REQUEST["host"])) {
             $where[] = "`sv`.`hostname` LIKE '".$db->real_escape_string(strtr($_REQUEST["host"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
@@ -82,8 +82,12 @@ class StampsController extends TemplatedController implements CronInterface {
             }
 
             $alert_after = parse_duration($_POST["alert_after"]);
+            $server = $_POST["server"] ?? NULL;
+            if (empty($server)) {
+                $server = NULL;
+            }
 
-            $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
+            $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after).", `server_id` = ".escape($db, $server)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
 
             // Dismiss alerts if the stamp is now valid.
             $q = $db->query("SELECT `timestamp`, `server_id` FROM `stamps` WHERE `id` = ".escape($db, $id)) or fail($db->error);
@@ -110,25 +114,32 @@ class StampsController extends TemplatedController implements CronInterface {
         }
 
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
+        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`server_id`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
         $a = $q->fetch_array();
 
         if (!$a) {
             throw new EntityNotFound("Stamp was not found.");
         }
 
-        return $this->renderTemplate("stamps/detail.html", ["stamp" => new Stamp($a)]);
+        return $this->renderTemplate("stamps/detail.html", [
+            "stamp" => new Stamp($a),
+            "servers" => $this->listServers($db)
+        ]);
     }
 
     public function put($hostname, $stamp) {
-        $db = connect();
-
         try {
             Stamp::put($stamp, $hostname);
         } catch (EntityNotFound $e) {
             http_response_code(400);
             echo "Invalid hostname";
         }
+
+        return json_encode(["status" => "OK"]);
+    }
+
+    public function put_nohost($stamp) {
+        Stamp::put($stamp);
 
         return json_encode(["status" => "OK"]);
     }
@@ -146,7 +157,7 @@ class StampsController extends TemplatedController implements CronInterface {
         }
 
         // Select current stamps that fails.
-        $q = $db->query("SELECT `stamp`, `server_id`, `timestamp` FROM `stamps` WHERE `alert_after` IS NOT NULL AND DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW()") or fail($db->error);
+        $q = $db->query("SELECT `id`, `stamp`, `server_id`, `timestamp` FROM `stamps` WHERE `alert_after` IS NOT NULL AND DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW()") or fail($db->error);
         while ($a = $q->fetch_array()) {
             // Is the stamp already alerted?
             $found = false;
@@ -164,10 +175,23 @@ class StampsController extends TemplatedController implements CronInterface {
                     "last_run" => $a["timestamp"]
                 ];
 
-                $db->query("INSERT INTO `alerts` (`server_id`, `timestamp`, `type`, `data`, `active`) VALUES (".escape($db, $a["server_id"]).", NOW(), 'stamp', ".escape($db, json_encode($stamp_data)).", 1)") or fail($db->error);
+                $db->query("INSERT INTO `alerts` (`server_id`, `stamp_id`, `timestamp`, `type`, `data`, `active`) VALUES (".escape($db, $a["server_id"]).", ".escape($db, $a["id"]).", NOW(), 'stamp', ".escape($db, json_encode($stamp_data)).", 1)") or fail($db->error);
             }
         }
 
         $db->commit();
+    }
+
+    protected function listServers(mysqli $db) {
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` ORDER BY `hostname` ASC") or fail($db->error);
+        $servers = [];
+        while ($a = $q->fetch_array()) {
+            $servers[] = [
+                "id" => $a["id"],
+                "hostname" => $a["hostname"]
+            ];
+        }
+
+        return $servers;
     }
 }

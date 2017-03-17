@@ -19,6 +19,7 @@ $router = new \nixfw\fastrouter\FastRouter();
 // API
 require_once "controllers/StampsController.php";
 $router->bind("/stamps/put/<hostname>/<stamp>", array("StampsController", "put"));
+$router->bind("/stamps/put/<stamp>", array("StampsController", "put_nohost"));
 
 require_once "controllers/ChecksController.php";
 $router->bind("/checks/list/<hostname>", array("ChecksController", "list"));
@@ -66,6 +67,12 @@ if (Session::get("user_id")) {
     $router->bind("/settings/check-charts/add", array("CheckChartsController", "add"));
     $router->bind("/settings/check-charts/edit/<id>", array("CheckChartsController", "edit"));
     $router->bind("/settings/check-charts/remove/<id>", array("CheckChartsController", "remove"));
+
+    require_once "controllers/CheckTypesController.php";
+    $router->bind("/settings/check-types", array("CheckTypesController", "index"));
+    $router->bind("/settings/check-types/add", array("CheckTypesController", "add"));
+    $router->bind("/settings/check-types/edit/<id>", array("CheckTypesController", "edit"));
+    $router->bind("/settings/check-types/remove/<id>", array("CheckTypesController", "remove"));
 
     require_once "controllers/ProfileController.php";
     $router->bind("/profile", array("ProfileController", "index"));

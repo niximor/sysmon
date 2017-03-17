@@ -8,6 +8,7 @@ class Stamp {
     public $timestamp;
     public $ago;
     public $alert_after;
+    public $server_id;
 
     public $hostname;
     public $in_alert;
@@ -16,6 +17,7 @@ class Stamp {
         if (!is_null($data)) {
             $this->id = $data["id"] ?? NULL;
             $this->stamp = $data["stamp"] ?? NULL;
+            $this->server_id = $data["server_id"] ?? NULL;
             $this->timestamp = (isset($data["timestamp"]))?DateTime::createFromFormat("Y-m-d G:i:s", $data["timestamp"]):NULL;
             $this->alert_after = $data["alert_after"] ?? NULL;
 
@@ -41,8 +43,9 @@ class Stamp {
         }
     }
 
-    public static function put($name, $server) {
+    public static function put($name, $server = NULL) {
         $db = connect();
+
         if (is_string($server)) {
             $q = $db->query("SELECT `id` FROM `servers` WHERE `hostname` = ".escape($db, $server)) or fail($db->error);
             $a = $q->fetch_array();
@@ -53,21 +56,18 @@ class Stamp {
             $server = $a["id"];
         }
 
-        $q = $db->query("SELECT `id` FROM `stamps` WHERE `stamp` = ".escape($db, $name)." AND `server_id` = ".escape($db, $server)) or fail($db->error);
+        // Try if stamp exists.
+        $q = $db->query("SELECT `id` FROM `stamps` WHERE `stamp` = ".escape($db, $name)." AND (`server_id` = ".escape($db, $server)." OR `server_id` IS NULL)") or fail($db->error);
         if ($a = $q->fetch_array()) {
             $db->query("UPDATE `stamps` SET `timestamp` = NOW() WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+            $stamp_id = $a["id"];
         } else {
             $db->query("INSERT INTO `stamps` (`stamp`, `server_id`, `timestamp`) VALUES (".escape($db, $name).", ".escape($db, $server).", NOW())") or fail($db->error);
+            $stamp_id = $db->insert_id;
         }
 
-        $q = $db->query("SELECT `id`, `data` FROM `alerts` WHERE `server_id` = ".escape($db, $server)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
-        while ($a = $q->fetch_array()) {
-            $data = json_decode($a["data"]);
-            if ($data->stamp == $name) {
-                $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
-            }
-        }
-
+        // Dismiss alerts
+        $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0 WHERE `stamp_id` = ".escape($db, $stamp_id)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
         $db->commit();
     }
 

@@ -20,6 +20,7 @@ function connect() {
         }
 
         $db->query("SET NAMES utf8") or fail($db->error);
+        $db->autocommit(false);
     }
 
     return $db;

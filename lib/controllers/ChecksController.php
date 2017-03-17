@@ -376,7 +376,8 @@ class ChecksController extends TemplatedController {
         return $this->renderTemplate("checks/add.html", [
             "servers" => $this->loadServers($db),
             "types" => $this->loadTypes($db),
-            "groups" => $this->loadGroups($db)
+            "groups" => $this->loadGroups($db),
+            "options" => $this->loadOptions($db)
         ]);
     }
 
@@ -437,7 +438,8 @@ class ChecksController extends TemplatedController {
             "check" => $a,
             "servers" => $this->loadServers($db),
             "types" => $this->loadTypes($db),
-            "groups" => $this->loadGroups($db)
+            "groups" => $this->loadGroups($db),
+            "options" => $this->loadOptions($db)
         ]);
     }
 
@@ -495,9 +497,14 @@ class ChecksController extends TemplatedController {
         $db = connect();
 
         $reading_mapping = [];
-        $q = $db->query("SELECT `id`, `name` FROM `readings`");
+
+        $q = $db->query("SELECT `id`, `name`, `check_type_id` FROM `readings`");
         while ($a = $q->fetch_array()) {
-            $reading_mapping[$a["name"]] = $a["id"];
+            if (!isset($reading_mapping[$a["check_type_id"]])) {
+                $reading_mapping[$a["check_type_id"]] = [];
+            }
+
+            $reading_mapping[$a["check_type_id"]][$a["name"]] = $a["id"];
         }
 
         $data = json_decode(file_get_contents("php://input"));
@@ -506,14 +513,14 @@ class ChecksController extends TemplatedController {
             $alerts = $check->alerts;
             $readings = $check->readings ?? new stdClass();
 
-            $q = $db->query("SELECT `server_id` FROM `checks` WHERE `id` = ".escape($db, $id)) or fail($db->error);
-            $a = $q->fetch_array();
+            $q = $db->query("SELECT `server_id`, `type_id` FROM `checks` WHERE `id` = ".escape($db, $id)) or fail($db->error);
+            $check = $q->fetch_array();
 
-            if (!$a) {
+            if (!$check) {
                 continue;
             }
 
-            $server_id = $a["server_id"];
+            $server_id = $check["server_id"];
 
             $q = $db->query("SELECT `id`, `type` FROM `alerts` WHERE `check_id` = ".escape($db, $id)." AND `active` = 1") or fail($db->error);
 
@@ -553,12 +560,12 @@ class ChecksController extends TemplatedController {
             // Store readings
             $to_insert = [];
             foreach ($readings as $key=>$val) {
-                if (!isset($reading_mapping[$key])) {
-                    $db->query("INSERT INTO `readings` (`name`) VALUES (".escape($db, $key).")");
-                    $reading_mapping[$key] = $db->insert_id;
+                if (!isset($reading_mapping[$check["type_id"]][$key])) {
+                    $db->query("INSERT INTO `readings` (`check_type_id`, `name`) VALUES (".escape($db, $check["type_id"]).", ".escape($db, $key).")");
+                    $reading_mapping[$check["type_id"]][$key] = $db->insert_id;
                 }
 
-                $to_insert[] = "(".escape($db, $id).", ".$reading_mapping[$key].", NOW(), ".escape($db, $val).")";
+                $to_insert[] = "(".escape($db, $id).", ".$reading_mapping[$check["type_id"]][$key].", NOW(), ".escape($db, $val).")";
             }
 
             if (!empty($to_insert)) {
@@ -687,5 +694,21 @@ class ChecksController extends TemplatedController {
 
             return $id;
         }
+    }
+
+    protected function loadOptions(mysqli $db) {
+        $q = $db->query("SELECT `check_type_id`, `option_name` FROM `check_type_options` ORDER BY `check_type_id` ASC, `option_name` ASC");
+
+        $options = [];
+
+        while ($a = $q->fetch_array()) {
+            if (!isset($options[$a["check_type_id"]])) {
+                $options[$a["check_type_id"]] = [];
+            }
+
+            $options[$a["check_type_id"]][] = $a["option_name"];
+        }
+
+        return $options;
     }
 }

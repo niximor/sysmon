@@ -1,0 +1,68 @@
+<script>
+$(function(){
+    var id = 0;
+
+    $("#inputOptions").click(function(){
+        var grp = $("<div class=\"input-group\"></div>");
+        var input = $("<input type=\"text\" name=\"options[]\" class=\"form-control\" />");
+        var btn_addon = $("<span class=\"input-group-btn\"></span>");
+        var btn = $("<button type=\"button\" class=\"btn btn-default\"><span class=\"fa fa-remove\"></span></button>");
+
+        btn.click(function(){
+            $(this.parentNode.parentNode).remove();
+        });
+
+        btn_addon.append(btn);
+
+        grp.append(input);
+        grp.append(btn_addon);
+        grp.insertBefore(this);
+    });
+
+    $("#inputReadings").click(function(){
+        ++id;
+
+        var grp = $("<div class=\"row\"></div>");
+        var form = $("<div class=\"col-sm-11\"></div>");
+        var btn_addon = $("<div class=\"col-sm-1\"></div>");
+        var btn = $("<button type=\"button\" class=\"btn btn-default\"><span class=\"fa fa-remove\"></span></button>");
+
+        form.html(""
+            + "<div class=\"form-group\">"
+            + "    <label class=\"col-sm-2 control-label\">Name:</label>"
+            + "    <div class=\"col-sm-10\">"
+            + "        <input type=\"text\" name=\"readings[" + id + "][name]\" class=\"form-control\" />"
+            + "    </div>"
+            + "</div>"
+            + "<div class=\"form-group\">"
+            + "    <label class=\"col-sm-2 control-label\">Data type:</label>"
+            + "    <div class=\"col-sm-10\">"
+            + "        <select name=\"readings[" + id + "][data_type]\" class=\"form-control\">"
+            + "            <option>raw</option>"
+            + "            <option>time</option>"
+            + "            <option>bytes</option>"
+            + "            <option>percent</option>"
+            + "        </select>"
+            + "    </div>"
+            + "</div>"
+            + "<div class=\"form-group\">"
+            + "    <label class=\"col-sm-2 control-label\">Precision:</label>"
+            + "    <div class=\"col-sm-10\">"
+            + "        <input type=\"number\" name=\"readings[" + id + "][precision]\" class=\"form-control\" value=\"0\" />"
+            + "    </div>"
+            + "</div>"
+            + "<hr />");
+
+        btn.click(function(){
+            $(this.parentNode.parentNode).remove();
+        });
+
+        btn_addon.append(btn);
+
+        grp.append(form);
+        grp.append(btn_addon);
+
+        grp.insertBefore(this);
+    });
+});
+</script>

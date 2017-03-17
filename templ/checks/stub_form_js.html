@@ -1,0 +1,77 @@
+<script>
+$(function(){
+    $("#btnAddParam").each(function(){
+        $(this).click(function(){
+            $("<div class=\"input-group\" style=\"width: 100%\"><input type=\"text\" name=\"params[]\" placeholder=\"Name\" class=\"form-control\" style=\"width: 20%\" /><input type=\"text\" name=\"values[]\" placeholder=\"Value\" class=\"form-control\" style=\"width: 80%\" /></div>").insertBefore(this);
+        });
+    });
+
+    var options = {};
+
+    {% for type_id, vals in options %}
+    options[{{ type_id }}] = [];
+        {% for val in vals %}
+            options[{{ type_id }}].push("{{ val }}");
+        {% endfor %}
+    {% endfor %}
+
+    function fillOptions() {
+        var type_id = $("#inputType").val();
+
+        var my_options = options[parseInt(type_id)];
+        var found = [];
+
+        if (!my_options) {
+            my_options = [];
+        }
+
+        $("#inputParams .input-group").each(function(){
+            var me = $(this);
+
+            var input_name = $("input[name=params\\[\\]]", me);
+            var input_value = $("input[name=values\\[\\]]", me);
+
+            var name = input_name.val();
+
+            found.push(name);
+
+            var keep = false;
+            var is_valid_option = false;
+
+            if (input_value.val() != "") {
+                keep = true;
+            }
+
+            for (var i = 0; i < my_options.length; ++i) {
+                if (my_options[i] == name) {
+                    keep = true;
+                    is_valid_option = true;
+                }
+            }
+
+            if (!is_valid_option) {
+                input_name.parent().addClass("has-error");
+            } else {
+                input_name.parent().removeClass("has-error");
+            }
+
+            if (!keep) {
+                me.remove();
+            }
+        });
+
+        for (var i = 0; i < my_options.length; ++i) {
+            if (found.indexOf(my_options[i]) < 0) {
+                $("#inputParams button").before(""
+                    + "<div class=\"input-group\" style=\"width: 100%\">"
+                    + "    <input type=\"text\" name=\"params[]\" placeholder=\"Name\" class=\"form-control\" style=\"width: 20%\" value=\"" + my_options[i] + "\" />"
+                    + "    <input type=\"text\" name=\"values[]\" placeholder=\"Value\" class=\"form-control\" style=\"width: 80%\" />"
+                    + "</div>");
+            }
+        }
+    }
+
+    $("#inputType").change(fillOptions);
+    fillOptions();
+});
+</script>

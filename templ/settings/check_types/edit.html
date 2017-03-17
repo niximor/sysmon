@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-hand-o-right"></span> Check types</h1>
+
+<ol class="breadcrumb">
+    <li>Settings</li>
+    <li><a href="{{ url_for(['CheckTypesController', 'index']) }}">Check types</a></li>
+    <li><a href="{{ url_for(['CheckTypesController', 'edit'], {'id': check.id}) }}">{{ check.name }}</a></li>
+</ol>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h2 class="panel-title">Modify check type</h2>
+    </div>
+    <div class="panel-body">
+        <form action="{{ url_for(['CheckTypesController', 'edit'], {'id': check.id}) }}" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputName">Name:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="inputName" name="name" value="{{ request.name|default(check.name) }}" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputIdentifier">Script name:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" id="inputIdentifier" name="identifier" value="{{ request.identifier|default(check.identifier) }}" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputOptions">Options:</label>
+                <div class="col-sm-10">
+                    {% for option in options %}
+                        <div class="input-group">
+                            <input type="text" name="options[]" class="form-control" value="{{ option }}" />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-default" onclick="$(this.parentNode.parentNode).remove()"><span class="fa fa-remove"></span></button>
+                            </span>
+                        </div>
+                    {% endfor %}
+                    <button type="button" id="inputOptions" class="btn btn-default"><span class="fa fa-plus"></span></button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputReadings">Readings:</label>
+                <div class="col-sm-10">
+                    {% for reading in readings %}
+                        <div class="row">
+                            <div class="col-sm-11">
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Name:</label>
+                                    <div class="col-sm-10">
+                                        <input type="text" name="readings[e{{ loop.index }}][name]" class="form-control" value="{{ reading.name }}" />
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Data type:</label>
+                                    <div class="col-sm-10">
+                                        <select name="readings[e{{ loop.index }}][data_type]" class="form-control">
+                                            <option{% if reading.data_type == 'raw' %} selected{% endif %}>raw</option>
+                                            <option{% if reading.data_type == 'time' %} selected{% endif %}>time</option>
+                                            <option{% if reading.data_type == 'bytes' %} selected{% endif %}>bytes</option>
+                                            <option{% if reading.data_type == 'percent' %} selected{% endif %}>percent</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Precision:</label>
+                                    <div class="col-sm-10">
+                                        <input type="number" name="readings[e{{ loop.index }}][precision]" class="form-control" value="{{ reading.precision|default(0) }}" />
+                                    </div>
+                                </div>
+                                <hr />
+                            </div>
+                            <div class="col-sm-1">
+                                <button type="button" class="btn btn-default" onclick="$(this.parentNode.parentNode).remove()"><span class="fa fa-remove"></span></button>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <button type="button" id="inputReadings" class="btn btn-default"><span class="fa fa-plus"></span></button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" class="btn btn-primary" value="Modify" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% include "settings/check_types/stub_form_js.html" %}
+{% endblock %}

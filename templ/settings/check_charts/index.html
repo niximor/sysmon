@@ -26,8 +26,8 @@
             <td>{{ chart.chart }}</td>
             <td>{{ chart.type }}</td>
             <td class="text-nowrap">
-                <a href="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" class="btn btn-default btn-sm">Edit</a>
-                <a href="{{ url_for(['CheckChartsController', 'remove'], {'id': chart.id}) }}" class="btn btn-default btn-sm">Remove</a>
+                <a href="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                <a href="{{ url_for(['CheckChartsController', 'remove'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
             </td>
         </tr>
     {% else %}

@@ -39,13 +39,14 @@ class CheckChartsController extends TemplatedController {
     public function add() {
         $db = connect();
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, 0 AS `selected` FROM `readings` `r` ORDER BY `r`.`name` ASC") or fail($db->error);
+        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`check_type_id`, 0 AS `selected` FROM `readings` `r` ORDER BY `r`.`name` ASC") or fail($db->error);
 
         $all_readings = [];
         while ($a = $q->fetch_array()) {
             $all_readings[] = [
                 "id" => $a["id"],
                 "name" => $a["name"],
+                "check_type_id" => $a["check_type_id"],
                 "selected" => (bool)$a["selected"]
             ];
         }
@@ -88,13 +89,14 @@ class CheckChartsController extends TemplatedController {
             throw new EntityNotFound("Chart was not found.");
         }
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `chr`.`reading_id` IS NOT NULL AS `selected` FROM `readings` `r` LEFT JOIN `check_chart_readings` `chr` ON (`r`.`id` = `chr`.`reading_id` AND `chr`.`chart_id` = ".escape($db, $chart["id"]).") ORDER BY `r`.`name` ASC") or fail($db->error);
+        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`check_type_id`, `chr`.`reading_id` IS NOT NULL AS `selected` FROM `readings` `r` LEFT JOIN `check_chart_readings` `chr` ON (`r`.`id` = `chr`.`reading_id` AND `chr`.`chart_id` = ".escape($db, $chart["id"]).") ORDER BY `r`.`name` ASC") or fail($db->error);
 
         $all_readings = [];
         while ($a = $q->fetch_array()) {
             $all_readings[] = [
                 "id" => $a["id"],
                 "name" => $a["name"],
+                "check_type_id" => $a["check_type_id"],
                 "selected" => (bool)$a["selected"]
             ];
         }
@@ -127,7 +129,7 @@ class CheckChartsController extends TemplatedController {
         return $this->renderTemplate("settings/check_charts/edit.html", [
             "chart" => $chart,
             "all_readings" => $all_readings,
-            "check_types" => $this->loadCheckTypes($db)
+            "check_types" => $this->loadCheckTypes($db),
         ]);
     }
 

@@ -4,7 +4,9 @@
 
 <ol class="breadcrumb">
     <li><a href="{{ url_for(['StampsController', 'index']) }}">Stamps</a></li>
+    {% if stamp.hostname %}
     <li><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></li>
+    {% endif %}
     <li><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}">{{ stamp.stamp }}</a></li>
 </ol>
 
@@ -24,7 +26,15 @@
             <div class="form-group">
                 <label class="col-sm-2 control-label">Host:</label>
                 <div class="col-sm-10">
-                    <p class="form-control-static">{{ stamp.hostname }}</p>
+                    <select name="server" class="form-control">
+                        <option value=""{% if not stamp.server_id %} selected{% endif %}></option>
+                        {% for server in servers %}
+                        <option value="{{ server.id }}"{% if stamp.server_id == server.id %} selected{% endif %}>{{ server.hostname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Set to empty server to allow this stamp to be collected from any server. Set to host to restrict the stamp only to selected host.</p>
                 </div>
             </div>
 

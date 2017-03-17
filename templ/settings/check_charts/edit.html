@@ -10,7 +10,7 @@
 
 <div class="panel panel-default">
     <div class="panel-heading clearfix">
-        <h2 class="panel-title">Edit chart</h2>
+        <h2 class="panel-title">Modify chart</h2>
     </div>
     <div class="panel-body">
         <form action="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" method="post" class="form-horizontal">
@@ -45,10 +45,11 @@
 
             <div class="form-group">
                 <div class="col-sm-10 col-sm-offset-2">
-                    <input type="submit" value="Edit" class="btn btn-primary" />
+                    <input type="submit" value="Modify" class="btn btn-primary" />
                 </div>
             </div>
         </form>
     </div>
 </div>
+{% include "settings/check_charts/stub_form_js.html" %}
 {% endblock %}

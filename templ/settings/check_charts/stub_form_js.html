@@ -1,0 +1,23 @@
+<script>
+function updateReadings() {
+    var type_id = $("#inputType").val();
+    $(".checkbox").each(function(){
+        var my_type_id = $(this).data("type-id");
+        if (my_type_id == undefined) {
+            return true;
+        }
+
+        if (my_type_id != type_id) {
+            $("input[type=checkbox]", this).prop("checked", false);
+            $(this).hide();
+        } else {
+            $(this).show();
+        }
+    })
+}
+
+$(function(){
+    $("#inputType").change(updateReadings);
+    updateReadings();
+});
+</script>

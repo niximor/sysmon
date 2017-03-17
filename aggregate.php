@@ -35,5 +35,4 @@ $db->query("DELETE FROM `readings_monthly` WHERE `datetime` < DATE_ADD(FROM_UNIX
 $db->query("DELETE FROM `readings_yearly` WHERE `datetime` < DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -1 YEAR)");
 $db->commit();
 
-// TODO: Stamps in docker?
-//Stamp::put("sysmon_aggregation", gethostname());
+Stamp::put("sysmon_aggregation");

@@ -43,7 +43,7 @@ var charts = [];
         </div>
         <div class="col-sm-6">
             <h4>Weekly</h3>
-            <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.chart_id }) }}">
+            <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': check.chart_id }) }}">
                 <div class="chart-container">
                     <div class="chart">
                          <div id="chart_{{ check.id }}_{{ check.chart_id }}_weekly"></div>
