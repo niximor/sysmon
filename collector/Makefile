@@ -16,7 +16,8 @@ deb:
 	dpkg-buildpackage
 
 define deploy-package
-	ssh root@$1 "apt-get update && apt-get install -y gcm-sysmon-collector=$(VERSION)";
+	echo "\033[92m***\033[0m Deploying to $1";
+	ssh root@$1 "apt-get update && apt-get install -y gcm-sysmon-collector=$(VERSION) || apt-get -yf install";
 endef
 
 deploy:

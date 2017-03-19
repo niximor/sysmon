@@ -15,6 +15,7 @@ Description: Sysmon collector meta package.
 Package: gcm-sysmon-collector-core
 Architecture: all
 Depends: ${shlib:Depends}, ${misc:Depends}, python, python-requests
+Replaces: gcm-sysmon-collector
 Description: SYSmon collector core functionality.
  Collect and check scripts, configuration and other required files for SYSmon probe to work.
 

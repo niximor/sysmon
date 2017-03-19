@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.0.1) xenial; urgency=medium
+
+  * Added replaces to collector-core package to correctly install over 1.x version.
+
+ -- Michal Kuchta <niximor@gmail.com>  Sun, 19 Mar 2017 19:46:04 +0100
+
 gcm-sysmon-collector (2.0.0) xenial; urgency=medium
 
   * Configuration file.
