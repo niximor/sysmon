@@ -1,2 +1,3 @@
 debian/*
 Makefile.local
+*.pyc

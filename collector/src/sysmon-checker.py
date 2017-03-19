@@ -1,315 +1,185 @@
 #!/usr/bin/env python
 
+from lib.config import AppConfig
+import logging
+
 import requests
 import json
 import socket
-import syslog
 import subprocess
-import re
-import os
 import time
 import traceback
+import os
+
+log = None
 
 
-SYSMON_ADDRESS = "https://sysmon.lan.gcm.cz"
+"""
+Check output format:
+STDOUT:
+reading=value
+everything else goes to log with info severity
+
+STDERR:
+ALERT:type:params as json
+everything else goes to log with error severity
+"""
 
 
-def check_http(check):
-    address = check["params"]["ADDRESS"]
-    validate_ssl = bool(check["params"].get("VALIDATE_SSL", False))
-    required_status = int(check["params"].get("STATUS"))
-    required_keyword = check["params"].get("KEYWORD")
+class Check:
+    def __init__(self, name, binary):
+        self.name = name
+        self.binary = binary
 
-    start = time.time()
-    r = requests.get(address, verify=validate_ssl)
-    response_time = time.time() - start
-
-    alerts = []
-    readings = {}
-
-    if required_status is not None:
-        if r.status_code != required_status:
-            alerts.append({
-                "type": "http_invalid_status",
-                "data": {
-                    "required_status": required_status,
-                    "actual_status": r.status_code
-                }
-            })
-
-    if required_keyword is not None:
-        if r.text.find(required_keyword) < 0:
-            alerts.append({
-                "type": "http_missing_keyword",
-                "data": {
-                    "keyword": required_keyword
-                }
-            })
-
-    readings["status"] = r.status_code
-    readings["time"] = response_time
-
-    return {
-        "alerts": alerts,
-        "readings": readings
-    }
-
-
-def check_ping(check):
-    """
-    For ping, utilize the system's ping utility. Otherwise, the script must be run with root privileges,
-    which is not desired.
-    """
-    cmd = "ping"
-
-    if check["params"].get("IPV6"):
-        cmd = "ping6"
-
-    output = subprocess.check_output([cmd, check["params"]["ADDRESS"], "-c", check["params"].get("COUNT", "1")])
-    match = re.search(r"(\d+) packets transmitted, (\d+) received", output)
-
-    alerts = []
-    readings = {}
-
-    if match:
-        if match.group(1) != match.group(2):
-            if match.group(2) != "0":
-                alerts.append({
-                    "type": "ping_packetloss",
-                    "data": {
-                        "sent": match.group(1),
-                        "received": match.group(2)
-                    }
-                })
-
-                readings["loss"] = (int(match.group(1)) - int(match.group(2))) * 100.0 / int(match.group(1))
-            else:
-                readings["loss"] = 100
-
-                alerts.append({
-                    "type": "ping_failed",
-                    "data": {
-                        "reason": "no_packet_received"
-                    }
-                })
-    else:
-        alerts.append({
-            "type": "ping_failed",
-            "data": {
-                "reason": "command_failed",
-                "output": output
-            }
-        })
-
-    rtt = re.search(r"rtt min/avg/max/mdev = ([0-9.]+)/([0-9.]+)/([0-9.]+)/([0-9.]+) ms", output)
-    if rtt:
-        readings["rtt"] = float(rtt.group(2))
-
-    return {
-        "alerts": alerts,
-        "readings": readings
-    }
-
-
-def check_port_open(check):
-    alerts = []
-    readings = {}
-
-    s_family = socket.AF_INET
-
-    all_ok = True
-
-    v6 = check["params"].get("IPV6", "0")
-    if v6 == "1":
-        s_family = socket.AF_INET6
-    elif v6 not in ("0", "1"):
-        alerts.append({
-            "type": "bad_param",
-            "data": {
-                "name": "IPV6",
-                "expected": "0 or 1"
-            }
-        })
-        all_ok = False
-
-    s_type = socket.SOCK_STREAM
-
-    address = check["params"].get("ADDRESS", "127.0.0.1")
-
-    try:
-        port = int(check["params"]["PORT"])
-        if port <= 0 or port > 65535:
-            raise ValueError("port outside range")
-    except (KeyError, ValueError) as e:
-        alerts.append({
-            "type": "bad_param",
-            "data": {
-                "name": "PORT",
-                "expected": "int"
-            }
-        })
-        all_ok = False
-
-    try:
-        timeout = float(check["params"].get("TIMEOUT", "0"))
-        if timeout < 0.0:
-            raise ValueError("timeout must be positive")
-        elif timeout < 0.0001:
-            timeout = None
-    except ValueError as e:
-        alerts.append({
-            "type": "bad_param",
-            "data": {
-                "name": "TIMEOUT",
-                "expected": "float"
-            }
-        })
-        all_ok = False
-
-    if all_ok:
-        try:
-            s = socket.socket(s_family, s_type)
-            s.settimeout(timeout)
-            s.connect((address, port))
-            s.close()
-        except socket.error as e:
-            alerts.append({
-                "type": "port_check_failed",
-                "data": {
-                    "errno": e.errno,
-                    "strerror": e.strerror
-                }
-            })
-
-    return {
-        "alerts": alerts,
-        "readings": readings
-    }
-
-
-def check_df(check):
-    alerts = []
-    readings = {}
-
-    try:
-        mountpoint = check["params"]["MOUNTPOINT"]
-
-        stat = os.statvfs(mountpoint)
-
-        total_size = stat.f_frsize * stat.f_blocks
-        free_space = stat.f_frsize * stat.f_bavail
-
-        readings["size_bytes"] = total_size
-        readings["free_bytes"] = free_space
-        readings["free_percent"] = free_space * 100.0 / total_size
+    def execute(self, check):
+        check_log = logging.getLogger("check.%s" % self.name)
 
         try:
-            if readings["free_percent"] < float(check["params"].get("ALERT_THRESHOLD", 0)):
-                alerts.append({
-                    "type": "low_disk_space",
-                    "data": {
-                        "mountpoint": mountpoint,
-                        "free_percent": readings["free_percent"],
-                        "free_bytes": readings["free_bytes"],
-                        "size_bytes": readings["size_bytes"]
-                    }
-                })
-        except ValueError as e:
-            alerts.append({
-                "type": "bad_param",
-                "data": {
-                    "name": "ALERT_THRESHOLD",
-                    "expected": "float"
-                }
-            })
-
-    except KeyError as e:
-        alerts.append({
-            "type": "bad_param",
-            "data": {
-                "name": str(e),
-                "expected": "Mount point"
+            new_env = {
+                key: val for key, val in os.environ.iteritems()
             }
-        })
+            new_env.update(check["params"])
 
-    return {
-        "alerts": alerts,
-        "readings": readings
-    }
+            logging.info("Checking %s." % (check.get("name"), ))
+            p = subprocess.Popen([self.binary], env=new_env, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = p.communicate()
+
+            readings = {}
+            alerts = []
+
+            if out is None:
+                out = ""
+
+            if err is None:
+                err = ""
+
+            for line in out.split("\n"):
+                if not line:
+                    continue
+
+                reading = line.split("=", 2)
+                if (len(reading) != 2):
+                    check_log.info(line)
+                else:
+                    try:
+                        readings[reading[0]] = float(reading[1])
+                    except ValueError as e:
+                        check_log.info(line)
+
+            for line in err.split("\n"):
+                if not line:
+                    continue
+
+                if line.startswith("ALERT:"):
+                    alert = line.split(":", 3)
+                    if len(alert) > 1:
+                        try:
+                            alerts.append({
+                                "type": alert[2],
+                                "data": json.loads(alert[3]) if len(alert) > 2 else {}
+                            })
+                        except ValueError as e:
+                            check_log.error("Invalid JSON alert data: %s" % (str(e), ))
+                            check_log.debug(traceback.format_exc())
+                    else:
+                        check_log.error(line)
+                else:
+                    check_log.error(line)
 
 
-def process_check(check):
-    check_calls = {
-        "ping": check_ping,
-        "http": check_http,
-        "port-open": check_port_open,
-        "df": check_df
-    }
+            return {
+                "id": check["id"],
+                "readings": readings,
+                "alerts": alerts
+            }
 
-    type_name = check.get("type")
+        except Exception as e:
+            check_log.error(str(e))
+            check_log.debug(traceback.format_exc())
 
-    if type_name not in check_calls or check_calls[type_name] is None:
-        syslog.syslog(syslog.LOG_WARNING, "Check unavailable: %s for check %s." % (check.get("type"), check.get("name")))
-
-        return {
-            "id": check["id"],
-            "alerts": [
-                {
-                    "type": "check_unavailable",
-                    "data": {
-                        "type": type_name
+            return {
+                "id": check["id"],
+                "alerts": [
+                    {
+                        "type": "check_failed",
+                        "data": {
+                            "exception": e.__class__.__name__,
+                            "message": str(e)
+                        }
                     }
-                }
-            ]
-        }
+                ]
+            }
 
-    out = {
-        "id": check["id"]
-    }
 
-    syslog.syslog(syslog.LOG_INFO, "Checking %s" % (check.get("name"), ))
+def find_checks(dirs):
+    checks = {}
 
-    try:
-        out.update(check_calls[type_name](check))
-    except Exception as e:
-        out.update({
-            "alerts": [
-                {
-                    "type": "check_failed",
-                    "data": {
-                        "exception": str(e)
-                    }
-                }
-            ]
-        })
+    for dirname in dirs:
+        for file in os.listdir(dirname):
+            full_name = os.path.join(dirname, file)
 
-        syslog.syslog(syslog.LOG_ERR, traceback.format_exc())
+            # Executable non-directory is check.
+            if not os.path.isdir(full_name) and os.access(full_name, os.X_OK):
+                name, _ = os.path.splitext(file)
 
-    return out
+                if name not in checks:
+                    checks[name] = Check(name, full_name)
+                else:
+                    log.warning("Duplicate check binary: %s. Using %s for check %s." % (full_name, checks[name].binary, name))
+
+    return checks
+
 
 
 def main():
-    syslog.openlog(logoption=syslog.LOG_PID)
+    conf = AppConfig([
+        ("server_address", str, "Address of SYSmon server."),
+        ("dir", str, "Directory to search for checks. To specify more than one path, separate paths with semicolon.")
+    ])
+
+    log = logging.getLogger()
+    log.info("SYSmon checker is starting.")
 
     try:
+        server_address = conf.get("server_address")
+        if server_address is None:
+            raise Exception("No server address configured.")
+
         hostname = socket.gethostname()
-        url = "%s/checks/list/%s" % (SYSMON_ADDRESS, hostname)
+        url = "%s/checks/list/%s" % (server_address, hostname)
         checks = json.loads(requests.get(url).text)
 
         response = []
 
+        known_check = find_checks(conf.get("dir", "/usr/share/gcm-sysmon/checks/").split(";"))
+
         for check in checks:
-            response.append(process_check(check))
+            check_name = check["type"]
+            try:
+                response.append(known_check[check_name].execute(check))
+            except KeyError as e:
+                response.append({
+                    "id": check["id"],
+                    "alerts": [
+                        {
+                            "type": "check_unavailable",
+                            "data": {
+                                "type": check_name
+                            }
+                        }
+                    ]
+                })
 
         if response:
-            r = requests.put("%s/checks/put" % (SYSMON_ADDRESS, ), data=json.dumps(response))
+            r = requests.put("%s/checks/put" % (server_address, ), data=json.dumps(response))
 
             if r.status_code != 200:
-                syslog.syslog(syslog.LOG_ERR, r.text)
+                logging.error(r.text)
     except Exception as e:
-        syslog.syslog(syslog.LOG_ERR, traceback.format_exc())
+        logging.error(str(e))
+        logging.debug(traceback.format_exc())
 
-    syslog.closelog()
+    log.info("SYSmon checker finished.")
 
 if __name__ == "__main__":
     main()

@@ -6,8 +6,11 @@ all:
 include Makefile.*
 
 install:
-	install -D src/sysmon-collect.py $(DESTDIR)/usr/bin/sysmon-collect.py
-	install -D src/sysmon-checker.py $(DESTDIR)/usr/bin/sysmon-checker.py
+	install -m 644 -D etc/sysmon.cfg $(DESTDIR)/etc/gcm-sysmon/sysmon.cfg
+	install -m 755 -D -t $(DESTDIR)/usr/share/gcm-sysmon/bin src/*.py
+	install -m 644 -D -t $(DESTDIR)/usr/share/gcm-sysmon/bin/lib src/lib/*.py
+	install -m 644 -D -t $(DESTDIR)/usr/share/gcm-sysmon/checks/lib usr/share/checks/lib/*.py
+	install -m 755 -D -t $(DESTDIR)/usr/share/gcm-sysmon/checks usr/share/checks/*.py
 
 deb:
 	dpkg-buildpackage

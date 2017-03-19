@@ -8,7 +8,36 @@ Homepage: http://sysmon.gcm.cz/
 
 Package: gcm-sysmon-collector
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, python, python-requests
-Description: Sysmon collector
- Script that collects information to the sysmon service.
+Depends: gcm-sysmon-collector-core, gcm-sysmon-check-df, gcm-sysmon-check-http, gcm-sysmon-check-ping, gcm-sysmon-check-port-open
+Description: Sysmon collector meta package.
+ Metapackage to install complete SYSmon client suite.
 
+Package: gcm-sysmon-collector-core
+Architecture: all
+Depends: ${shlib:Depends}, ${misc:Depends}, python, python-requests
+Description: SYSmon collector core functionality.
+ Collect and check scripts, configuration and other required files for SYSmon probe to work.
+
+Package: gcm-sysmon-check-df
+Architecture: all
+Depends: python, gcm-sysmon-collector-core
+Description: SYSmon df check plugin.
+ SYSmon df check plugin.
+
+Package: gcm-sysmon-check-http
+Architecture: all
+Depends: python, python-requests, gcm-sysmon-collector-core
+Description: SYSmon http check plugin.
+ SYSmon http check plugin.
+
+Package: gcm-sysmon-check-ping
+Architecture: all
+Depends: python, gcm-sysmon-collector-core
+Description: SYSmon ping check plugin.
+ SYSmon ping check plugin
+
+Package: gcm-sysmon-check-port-open
+Architecture: all
+Depends: python, gcm-sysmon-collector-core
+Description: SYSmon port-open check plugin.
+ SYSmon port-open check plugin.

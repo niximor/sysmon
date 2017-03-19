@@ -1,14 +1,17 @@
 #!/usr/bin/env python
 
+from lib.config import AppConfig
+
 import requests
 import subprocess
 import socket
 import os
 import json
-import syslog
+import logging
+import traceback
 
 
-SYSMON_ADDRESS = "https://sysmon.lan.gcm.cz"
+log = None
 
 
 def get_hostname():
@@ -42,7 +45,7 @@ def get_uptime():
         try:
             return int(float(open("/proc/uptime", "r").read().split(" ")[0]))
         except Exception as e:
-            syslog.syslog(syslog.LOG_WARNING, "Unable to get uptime: %s" % (str(e)))
+            log.warning("Unable to get uptime: %s" % (str(e)))
             return None
     else:
         return None
@@ -62,10 +65,18 @@ def get_packages():
 
 
 def main():
-    syslog.openlog(logoption=syslog.LOG_PID)
-    syslog.syslog(syslog.LOG_INFO, "Sysmon collector starting.")
+    conf = AppConfig([
+        ("server_address", str, "Address of SYSmon server.")
+    ])
+
+    log = logging.getLogger()
+    log.info("SYSmon collector is starting.")
 
     try:
+        server_address = conf.get("server_address")
+        if server_address is None:
+            raise Exception("No server address configured.")
+
         hostname = get_hostname()
         distribution, version = get_system_version()
         kernel = get_system_kernel()
@@ -73,7 +84,7 @@ def main():
 
         packages = get_packages()
 
-        r = requests.put("%s/collect.php" % (SYSMON_ADDRESS, ), data=json.dumps({
+        r = requests.put("%s/collect.php" % (conf.get("server_address"), ), data=json.dumps({
             "hostname": hostname,
             "distribution": distribution,
             "version": version,
@@ -83,15 +94,15 @@ def main():
         }))
 
         if r.status_code != 200:
-            syslog.syslog(syslog.LOG_ERR, r.text)
+            log.error(r.text)
         else:
-            syslog.syslog(syslog.LOG_DEBUG, r.text)
+            log.debug(r.text)
     except Exception as e:
-        syslog.syslog(syslog.LOG_ERR, str(e))
+        log.error(str(e))
+        log.debug(traceback.format_exc())
 
-    syslog.syslog(syslog.LOG_INFO, "Sysmon collector finished.")
-    syslog.closelog()
+
+    log.info("SYSmon collector finished.")
 
 if __name__ == "__main__":
     main()
-
