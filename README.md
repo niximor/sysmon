@@ -15,11 +15,18 @@ Tool for monitoring system status of Linux servers. Currently the support is onl
 
 The list of features is not final, new features are added on per-demand basis.
 
-# Installation 
+# Installation
 
+## Website
 - Create empty database in the MySQL server.
 - Import db/initial.sql and all increments there to the database.
-- Edit config file `lib/config.php.example`. When you are done with it, rename the file to `config.php`.
-- Edit collector/sysmon-collect.py and collector/sysmon-checker.py, there is `SYSMON_ADDRESS` address variable at the top of the files. Point it to your installation address.
-- Compile debian package gcm-sysmon-collector and distribute it to your servers.
+- Edit config file `website/lib/config.php.example`. When you are done with it, rename the file to `config.php`.
+- Insert initial user account into the database, use SHA256 hash of salt + password as password.
+- Point your webserver to the `website` directory.
+
+## Collector
+- Edit collector/etc/sysmon.cfg, there is `server_address` option. Point it to your website installation address.
+- Compile debian packages in the collector directory by either calling `make deb` or manually using `dpkg-buildpackage`.
+- Distribute created packages to your servers.
+- There is one metapackage, `gcm-sysmon-collector`, which has dependencies for all other packages, if you want to install complete suite. You can also install individual packages. `gcm-sysmon-collector-core` is base required package for anything to work. Then, you can install individual checks located in the `gcm-sysmon-check-*` packages.
 - Now you can open your browser and point it to your sysmon installation. The servers should appear in a few minutes.
