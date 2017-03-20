@@ -147,7 +147,7 @@ def main():
 
         hostname = socket.gethostname()
         url = "%s/checks/list/%s" % (server_address, hostname)
-        checks = json.loads(requests.get(url).text)
+        checks = json.loads(requests.get(url, verify=conf.get("server_verify_ssl", True)).text)
 
         response = []
 
@@ -171,7 +171,7 @@ def main():
                 })
 
         if response:
-            r = requests.put("%s/checks/put" % (server_address, ), data=json.dumps(response))
+            r = requests.put("%s/checks/put" % (server_address, ), data=json.dumps(response), verify=conf.get("server_verify_ssl", True))
 
             if r.status_code != 200:
                 logging.error(r.text)

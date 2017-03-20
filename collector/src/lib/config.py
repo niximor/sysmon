@@ -29,7 +29,7 @@ class AppConfig:
 
         if options is not None:
             for option_name, option_type, option_description in options:
-                if isinstance(option_type, bool):
+                if option_type == bool:
                     parser.add_argument("--%s" % (option_name, ), action="store_true", help=option_description)
                 else:
                     parser.add_argument("--%s" % (option_name, ), type=option_type, help=option_description)
@@ -45,7 +45,7 @@ class AppConfig:
             for option_name, option_type, _ in options:
                 try:
                     val = config.get(section, option_name)
-                    self.options[option_name] = option_type(val)
+                    self.options[option_name] = self._convert_type(val, option_type)
 
                 except NoOptionError as e:
                     pass
@@ -53,17 +53,26 @@ class AppConfig:
                 except NoSectionError as e:
                     try:
                         val = config.get("DEFAULT", option_name)
-                        self.options[option_name] = option_type(val)
+                        self.options[option_name] = self._convert_type(val)
                     except NoOptionError as e:
                         pass
                     except NoSectionError as e:
                         pass
 
         for key, val in vars(args).iteritems():
-            if val is not None or key not in self.options:
+            if val is not None and key not in self.options:
                 self.options[key] = val
 
         self.setup_logging()
+
+    def _convert_type(self, val, option_type):
+        if option_type == bool:
+            return self._get_bool(val)
+        else:
+            return option_type(val)
+
+    def _get_bool(val):
+        return val == "1" or (isinstance(val, (str, unicode)) and val.lower() == "true") or bool(val)
 
     def setup_logging(self):
         root = logging.getLogger()

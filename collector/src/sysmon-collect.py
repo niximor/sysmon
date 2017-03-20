@@ -91,7 +91,7 @@ def main():
             "kernel": kernel,
             "uptime": uptime,
             "packages": packages
-        }))
+        }), verify=conf.get("server_verify_ssl", True))
 
         if r.status_code != 200:
             log.error(r.text)

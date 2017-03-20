@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.0.2) xenial; urgency=medium
+
+  * Option to disable SSL verification of server certificate.
+
+ -- Michal Kuchta <niximor@gmail.com>  Mon, 20 Mar 2017 10:41:10 +0100
+
 gcm-sysmon-collector (2.0.1) xenial; urgency=medium
 
   * Added replaces to collector-core package to correctly install over 1.x version.
