@@ -8,7 +8,12 @@ Homepage: http://sysmon.gcm.cz/
 
 Package: gcm-sysmon-collector
 Architecture: all
-Depends: gcm-sysmon-collector-core (=${binary:Version}), gcm-sysmon-check-df (=${binary:Version}), gcm-sysmon-check-http (=${binary:Version}), gcm-sysmon-check-ping (=${binary:Version}), gcm-sysmon-check-port-open (=${binary:Version})
+Depends: gcm-sysmon-collector-core (= ${binary:Version}),
+ gcm-sysmon-check-df (= ${binary:Version}),
+ gcm-sysmon-check-http (= ${binary:Version}),
+ gcm-sysmon-check-ping (= ${binary:Version}),
+ gcm-sysmon-check-port-open (= ${binary:Version}),
+ gcm-sysmon-check-if-traffic (= ${binary:Version})
 Description: Sysmon collector meta package.
  Metapackage to install complete SYSmon client suite.
 
@@ -42,3 +47,9 @@ Architecture: all
 Depends: python, gcm-sysmon-collector-core
 Description: SYSmon port-open check plugin.
  SYSmon port-open check plugin.
+
+Package: gcm-sysmon-check-if-traffic
+Architecture: all
+Depends: python, gcm-sysmon-collector-core
+Description: SYSmon if_traffic check plugin.
+ SYSmon if_traffic check plugin.
