@@ -134,6 +134,7 @@ def find_checks(dirs):
 def main():
     conf = AppConfig([
         ("server_address", str, "Address of SYSmon server."),
+        ("server_verify_ssl", bool, "Verify SYSmon server's SSL certificate?"),
         ("dir", str, "Directory to search for checks. To specify more than one path, separate paths with semicolon.")
     ])
 

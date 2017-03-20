@@ -8,7 +8,7 @@ Homepage: http://sysmon.gcm.cz/
 
 Package: gcm-sysmon-collector
 Architecture: all
-Depends: gcm-sysmon-collector-core, gcm-sysmon-check-df, gcm-sysmon-check-http, gcm-sysmon-check-ping, gcm-sysmon-check-port-open
+Depends: gcm-sysmon-collector-core (=${binary:Version}), gcm-sysmon-check-df (=${binary:Version}), gcm-sysmon-check-http (=${binary:Version}), gcm-sysmon-check-ping (=${binary:Version}), gcm-sysmon-check-port-open (=${binary:Version})
 Description: Sysmon collector meta package.
  Metapackage to install complete SYSmon client suite.
 

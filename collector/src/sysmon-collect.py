@@ -66,7 +66,8 @@ def get_packages():
 
 def main():
     conf = AppConfig([
-        ("server_address", str, "Address of SYSmon server.")
+        ("server_address", str, "Address of SYSmon server."),
+        ("server_verify_ssl", bool, "Verify SYSmon server's SSL certificate?")
     ])
 
     log = logging.getLogger()
