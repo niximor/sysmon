@@ -30,7 +30,7 @@
 </script>
 
 <div class="row">
-    <div class="col-sm-{% if series %}6{% else %}12{% endif %}">
+    <div class="col-sm-{% if charts %}6{% else %}12{% endif %}">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
                 <h3 class="panel-title">Overview</h3>
@@ -86,7 +86,7 @@
         </div>
     </div>
 
-    {% if series %}
+    {% if charts %}
     <div class="col-sm-6">
         <div class="panel panel-default">
             <div class="panel-heading clearfix">
@@ -171,25 +171,9 @@
 <script src="{{ url_for('static', 'flot/jquery.flot.min.js') }}"></script>
 <script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
 <script>
-    var series = [];
-    var precision = 0;
-
-    {% for name, values in series %}
-        if ({{ reading_settings[name].precision }} > precision) {
-            precision = {{ reading_settings[name].precision }};
-        }
-
-        series.push({
-            label: "{{ name }}",
-            data: [
-                {% for value in values %}
-                [{{ value[0] }}*1000, {{ value[1] }}],
-                {% endfor %}
-            ]
-        });
-    {% endfor %}
-
-    chart("#chart", series, "{{ granularity }}", formatter, precision);
+    charts_multiple([
+        {"id": {{ chart.id }}, "container": "#chart", "granularity": "{{ granularity }}"}
+    ], "{{ url_for(['ChecksController', 'chart_data'], {'id': check.id, 'chart_id': '-chart_id-'} ) }}");
 </script>
 
 {% endblock %}

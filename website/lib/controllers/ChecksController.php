@@ -163,22 +163,9 @@ class ChecksController extends TemplatedController {
             $format = $a["data_type"];
         }
 
-        if (!empty($readings)) {
-            $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)  WHERE `v`.`check_id` = ".escape($db, $check["id"])." AND `v`.`reading_id` IN (".implode(",", $readings).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `v`.`check_id` ASC, `v`.`reading_id` ASC, `v`.`datetime` ASC") or fail($db->error);
-
-            while ($a = $q->fetch_array()) {
-                if (!isset($series[$a["name"]])) {
-                    $series[$a["name"]] = [];
-                }
-
-                $series[$a["name"]][] = [$a["timestamp"], $a["value"]];
-            }
-        }
-
         return $this->renderTemplate("checks/detail.html", [
             "check" => $check,
             "alerts" => Alert::loadLatest($db, NULL, $check["id"]),
-            "series" => $series,
             "chart" => $chart,
             "format" => $format,
             "reading_settings" => $reading_settings,
@@ -289,18 +276,22 @@ class ChecksController extends TemplatedController {
         switch ($granularity) {
             case "daily":
                 $interval = "1 DAY";
+                $seconds = 5*60;
                 break;
 
             case "weekly":
                 $interval = "1 WEEK";
+                $seconds = 15*60;
                 break;
 
             case "monthly":
                 $interval = "1 MONTH";
+                $seconds = 2*3600;
                 break;
 
             case "yearly":
                 $interval = "1 YEAR";
+                $seconds = 86400;
                 break;
         }
 
@@ -308,32 +299,593 @@ class ChecksController extends TemplatedController {
 
         $readings = [];
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`data_type`, `r`.`precision` FROM `check_chart_readings` `cr` JOIN `readings` `r` ON (`r`.`id` = `cr`.`reading_id`) WHERE `cr`.`chart_id` = ".escape($db, $chart_id));
+        $q = $db->query("SELECT `check_type_id` FROM `check_charts` WHERE `id` = ".escape($db, $chart_id)) or fail($db->error);
+        $a = $q->fetch_array();
+        if (!$a) {
+            throw new EntityNotFound("Chart was not found.");
+        }
+
+        $type_id = $a["check_type_id"];
+
+        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`data_type`, `r`.`precision`, `r`.`type`, `r`.`compute`, IF(`cr`.`chart_id` IS NULL, 0, 1) AS `used` FROM `readings` `r` LEFT JOIN `check_chart_readings` `cr` ON (`r`.`id` = `cr`.`reading_id` AND `cr`.`chart_id` = ".escape($db, $chart_id).") WHERE `r`.`check_type_id` = ".escape($db, $type_id)) or fail($db->error);
+
+        $used = [];
         while ($a = $q->fetch_array()) {
             $readings[(int)$a["id"]] = [
                 "id" => (int)$a["id"],
                 "name" => $a["name"],
                 "data_type" => $a["data_type"],
-                "precision" => (int)$a["precision"]
+                "precision" => (int)$a["precision"],
+                "type" => $a["type"],
+                "compute" => $a["compute"],
+                "used" => $a["used"]
             ];
+
+            if ($a["used"] == "1") {
+                $used[] = (int)$a["id"];
+            }
         }
 
         $series = [];
 
+        $now = ceil(time() / $seconds) * $seconds;
+
         if (!empty($readings)) {
-            $q = $db->query("SELECT `v`.`reading_id`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` WHERE `v`.`check_id` = ".escape($db, $id)." AND `v`.`reading_id` IN (".implode(",", array_map(function($r) { return $r["id"]; }, $readings)).") AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() ORDER BY `check_id` ASC, `reading_id` ASC, `datetime` ASC") or fail($db->error);
+            $q = $db->query("SELECT `v`.`reading_id`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` WHERE `v`.`check_id` = ".escape($db, $id)." AND `v`.`reading_id` IN (".implode(",", array_map(function($r) { return $r["id"]; }, $readings)).") AND `v`.`datetime` BETWEEN DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -".$interval.") AND FROM_UNIXTIME(".$now.") ORDER BY `check_id` ASC, `reading_id` ASC, `datetime` ASC") or fail($db->error);
+
+            $last_reading_values = [];
+
             while ($a = $q->fetch_array()) {
-                if (!isset($series[$a["reading_id"]])) {
-                    $series[(int)$a["reading_id"]] = [];
+                $optimized_timestamp = floor($a["timestamp"] / $seconds) * $seconds;
+
+                if (!isset($series[(int)$optimized_timestamp])) {
+                    $series[(int)$optimized_timestamp] = [];
                 }
-                $series[(int)$a["reading_id"]][] = [(int)$a["timestamp"], (float)$a["value"]];
+
+                $value = (float)$a["value"];
+                $reading = $readings[$a["reading_id"]];
+
+                if ($reading["type"] == "COUNTER" || $reading["type"] == "DERIVE") {
+                    if (!isset($last_reading_values[$a["reading_id"]])) {
+                        $last_reading_values[$a["reading_id"]] = $value;
+                        continue;
+                    }
+
+                    $last = $last_reading_values[$a["reading_id"]];
+                    $value = ($value - $last);
+
+                    if ($reading["type"] == "DERIVE") {
+                        if ($value < 0) {
+                            $value = (float)$a["value"];
+                        }
+                    }
+                }
+
+                $series[$optimized_timestamp][(int)$a["reading_id"]] = $value;
+            }
+
+            $q = $db->query("SELECT UNIX_TIMESTAMP(DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -".$interval.")) AS `from`") or fail($db->error);
+            $a = $q->fetch_array();
+
+            $from = floor($a["from"] / $seconds) * $seconds;
+
+            // Fill in missing readings
+            $compute = [];
+            foreach ($readings as $reading) {
+                for ($t = $from; $t <= $now; $t += $seconds) {
+                    if (!isset($series[$t])) {
+                        $series[$t] = [];
+                    }
+
+                    if (!isset($series[$t][(int)$reading["id"]])) {
+                        $series[$t][(int)$reading["id"]] = NULL;
+                    }
+                }
+
+                if ($reading["type"] == "COMPUTE") {
+                    $compute[] = $reading;
+                }
+            }
+
+            // Count computed readings.
+            foreach ($compute as $reading) {
+                for ($t = $from; $t <= $now; $t += $seconds) {
+                    $variables = [];
+                    foreach ($readings as $reading) {
+                        $variables[$reading["name"]] = $series[$t][(int)$reading["id"]];
+                    }
+
+                    $series[$t][(int)$reading["id"]] = $this->compute($reading["compute"], $variables);
+                }
+            }
+        }
+
+        $series_out = [];
+
+        foreach ($series as $time => $values) {
+            foreach ($values as $reading => $value) {
+                if (!in_array($reading, $used)) {
+                    continue;
+                }
+
+                if (!isset($series_out[$reading])) {
+                    $series_out[$reading] = [];
+                }
+
+                $series_out[$reading][] = [$time, $value];
             }
         }
 
         return json_encode([
             "readings" => $readings,
-            "series" => $series
+            "series" => $series_out
         ]);
+    }
+
+    protected function compute($rpn, $variables) {
+        $ops = explode(",", $rpn);
+        $stack = [];
+
+        //echo "Compute ".implode(",", $ops)." with ".var_export($variables, true)."<br />";
+
+        foreach ($ops as $op) {
+            $op = trim($op);
+
+            switch ($op) {
+                case "LT":
+                    $a2 = array_pop($stack);
+                    $a1 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 < $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "LE":
+                    $a2 = array_pop($stack);
+                    $a1 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 <= $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "GT":
+                    $a2 = array_pop($stack);
+                    $a1 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 > $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "GE":
+                    $a2 = array_pop($stack);
+                    $a1 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 >= $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "EQ":
+                    $a1 = array_pop($stack);
+                    $a2 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 == $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "NE":
+                    $a1 = array_pop($stack);
+                    $a2 = array_pop($stack);
+                    if (!is_null($a1) && !is_null($a2)) {
+                        if ($a1 != $a2) {
+                            array_push($stack, 1);
+                        } else {
+                            array_push($stack, 0);
+                        }
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "UN":
+                case "ISINF":
+                    $a = array_pop($stack);
+                    if (is_null($a)) {
+                        array_push($stack, 1);
+                    } else {
+                        array_push($stack, 0);
+                    }
+                    break;
+
+                case "IF":
+                    $a = array_pop($stack);
+                    $b = array_pop($stack);
+                    $c = array_pop($stack);
+
+                    if ($c == 0) {
+                        array_push($stack, $a);
+                    } else {
+                        array_push($stack, $b);
+                    }
+                    break;
+
+                case "MIN":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, min($a, $b));
+                    }
+                    break;
+
+                case "MAX":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, max($a, $b));
+                    }
+                    break;
+
+                case "MINNAN":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+
+                    if (is_null($a)) {
+                        array_push($stack, $b);
+                    } elseif (is_null($b)) {
+                        array_push($stack, $a);
+                    } else {
+                        array_push($stack, min($a, $b));
+                    }
+                    break;
+
+                case "MAXNAN":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+
+                    if (is_null($a)) {
+                        array_push($stack, $b);
+                    } elseif (is_null($b)) {
+                        array_push($stack, $a);
+                    } else {
+                        array_push($stack, max($a, $b));
+                    }
+                    break;
+
+                case "LIMIT":
+                    $max = array_pop($stack);
+                    $min = array_pop($stack);
+                    $value = array_pop($stack);
+
+                    if ($value >= $min && $value <= $max) {
+                        array_push($stack, $value);
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "+":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, $a + $b);
+                    }
+                    break;
+
+                case "-":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, $a - $b);
+                    }
+                    break;
+
+                case "*":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, $a * $b);
+                    }
+                    break;
+
+                case "/":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, $a / $b);
+                    }
+                    break;
+
+                case "%":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+                    if (is_null($a) || is_null($b)) {
+                        array_push($stack, NULL);
+                    } else {
+                        array_push($stack, $a % $b);
+                    }
+                    break;
+
+                case "ADDNAN":
+                    $b = array_pop($stack);
+                    $a = array_pop($stack);
+
+                    if (is_null($b)) {
+                        $b = 0;
+                    }
+
+                    if (is_null($a)) {
+                        $a = 0;
+                    }
+
+                    array_push($stack, $a + $b);
+                    break;
+
+                case "SIN":
+                    $a = array_pop($stack);
+                    array_push($stack, sin($a));
+                    break;
+
+                case "COS":
+                    $a = array_pop($stack);
+                    array_push($stack, cos($a));
+                    break;
+
+                case "LOG":
+                    $a = array_pop($stack);
+                    array_push($stack, log($a));
+                    break;
+
+                case "EXP":
+                    $a = array_pop($stack);
+                    array_push($stack, exp($a));
+                    break;
+
+                case "SQRT":
+                    $a = array_pop($stack);
+                    array_push($stack, sqrt($a));
+                    break;
+
+                case "ATAN":
+                    $a = array_pop($stack);
+                    array_push($stack, atan($a));
+                    break;
+
+                case "ATAN2":
+                    $x = array_pop($stack);
+                    $y = array_pop($stack);
+                    array_push($stack, atan2($x, $y));
+                    break;
+
+                case "FLOOR":
+                    $a = array_pop($stack);
+                    array_push($stack, floor($a));
+                    break;
+
+                case "CEIL":
+                    $a = array_pop($stack);
+                    array_push($stack, ceil($a));
+                    break;
+
+                case "DEG2RAD":
+                    $a = array_pop($stack);
+                    array_push($stack, deg2rad($a));
+                    break;
+
+                case "RAD2DEG":
+                    $a = array_pop($stack);
+                    array_push($stack, rad2deg($a));
+                    break;
+
+                case "ABS":
+                    $a = array_pop($stack);
+                    array_push($stack, abs($a));
+                    break;
+
+                case "SORT":
+                    $num = array_pop($stack);
+                    $arr = [];
+                    while ($num > 0) {
+                        $a = array_pop($stack);
+                        $arr[] = $a;
+                        --$num;
+                    }
+
+                    sort($arr);
+
+                    foreach ($arr as $a) {
+                        array_push($stack, $a);
+                    }
+                    break;
+
+                case "REV":
+                    $num = array_pop($stack);
+                    $arr = [];
+                    while ($num > 0) {
+                        $a = array_pop($stack);
+                        $arr[] = $a;
+                        --$num;
+                    }
+
+                    array_reverse($arr);
+
+                    foreach ($arr as $a) {
+                        array_push($stack, $a);
+                    }
+                    break;
+
+                case "AVG":
+                    $num = array_pop($num);
+
+                    $sum = 0;
+                    $cnt = 0;
+
+                    while ($num > 0) {
+                        $a = array_pop($stack);
+                        if (!is_null($a)) {
+                            $sum += $a;
+                            ++$cnt;
+                        }
+
+                        --$num;
+                    }
+
+                    if ($cnt > 0) {
+                        array_push($stack, $sum / $cnt);
+                    } else {
+                        array_push($stack, NULL);
+                    }
+                    break;
+
+                case "MEDIAN":
+                    $num = array_pop($num);
+                    $arr = [];
+
+                    while ($num > 0) {
+                        $a = array_pop($stack);
+                        if (!is_null($a)) {
+                            $arr[] = $a;
+                        }
+
+                        --$num;
+                    }
+
+                    array_push($stack, $arr[floor(count($arr) / 2)]);
+                    break;
+
+                case "UNKN":
+                    array_push($stack, NULL);
+                    break;
+
+                case "INF":
+                    array_push($stack, inf);
+                    break;
+
+                case "NEGINF":
+                    array_push($stack, -inf);
+                    break;
+
+                case "DUP":
+                    $a = array_pop($stack);
+                    array_push($stack, $a);
+                    array_push($stack, $a);
+                    break;
+
+                case "POP":
+                    array_pop($stack);
+                    break;
+
+                case "EXC":
+                    $a = array_pop($stack);
+                    $b = array_pop($stack);
+
+                    array_push($stack, $a);
+                    array_push($stack, $b);
+                    break;
+
+                case "DEPTH":
+                    array_push($stack, count($stack));
+                    break;
+
+                case "COPY":
+                    $num = array_pop($stack);
+
+                    $arr = [];
+                    while ($num > 0) {
+                        $arr[] = array_pop($stack);
+                        --$num;
+                    }
+
+                    array_reverse($arr);
+
+                    foreach ($arr as $a) {
+                        array_push($stack, $a);
+                    }
+                    foreach ($arr as $a) {
+                        array_push($stack, $a);
+                    }
+                    break;
+
+                case "INDEX":
+                    $index = array_pop($stack);
+                    array_push($stack, $stack[$index] ?? NULL);
+                    break;
+
+                case "ROLL":
+                    $m = array_pop($stack);
+                    $n = array_pop($stack);
+
+                    $arr = [];
+                    $num = $n;
+                    while ($num > 0) {
+                        $arr[] = array_pop($stack);
+                        --$num;
+                    }
+
+                    for ($i = $m; $i < $n + $m; ++$i) {
+                        array_push($stack, $arr[$i % count($arr)]);
+                    }
+                    break;
+
+                default:
+                    if (is_numeric($op)) {
+                        array_push($stack, $op);
+                    } else {
+                        array_push($stack, $variables[$op] ?? NULL);
+                    }
+                    break;
+            }
+
+            //echo "Stack = ".var_export($stack, true)."<br />";
+        }
+
+        $resp = array_pop($stack);
+
+        //echo "Result = ".$resp."<br />";
+
+        return $resp;
     }
 
     public function add() {

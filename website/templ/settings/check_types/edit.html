@@ -72,6 +72,23 @@
                                         <input type="number" name="readings[e{{ loop.index }}][precision]" class="form-control" value="{{ reading.precision|default(0) }}" />
                                     </div>
                                 </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Type:</label>
+                                    <div class="col-sm-10">
+                                        <select name="readings[e{{ loop.index }}][type]" class="form-control">
+                                            <option{% if reading.type == 'GAUGE' %} selected{% endif %}>GAUGE</option>
+                                            <option{% if reading.type == 'COUNTER' %} selected{% endif %}>COUNTER</option>
+                                            <option{% if reading.type == 'DERIVE' %} selected{% endif %}>DERIVE</option>
+                                            <option{% if reading.type == 'COMPUTE' %} selected{% endif %}>COMPUTE</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="col-sm-2 control-label">Compute:</label>
+                                    <div class="col-sm-10">
+                                        <textarea name="readings[e{{ loop.index }}][compute]" class="form-control">{{ reading.compute }}</textarea>
+                                    </div>
+                                </div>
                                 <hr />
                             </div>
                             <div class="col-sm-1">
