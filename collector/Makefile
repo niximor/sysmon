@@ -1,5 +1,6 @@
 VERSION=$(strip $(shell dpkg-parsechangelog | grep Version: | cut -d':' -f2))
 DEPLOY_DESTS=
+root_dir := $(patsubst %/,%, $(dir $(realpath $(firstword $(MAKEFILE_LIST)))))
 
 all:
 
@@ -12,6 +13,9 @@ install:
 	install -m 644 -D -t $(DESTDIR)/usr/share/gcm-sysmon/checks/lib usr/share/checks/lib/*.py
 	install -m 755 -D -t $(DESTDIR)/usr/share/gcm-sysmon/checks usr/share/checks/*.py
 
+check:
+	PYTHONPATH=$(root_dir)/src:$(root_dir)/tests python -m unittest discover tests
+
 deb:
 	dpkg-buildpackage
 
@@ -23,4 +27,4 @@ endef
 deploy:
 	$(foreach host,$(DEPLOY_DESTS),$(call deploy-package,$(host)))
 
-.PHONY: all install deb deploy
+.PHONY: all install deb deploy check

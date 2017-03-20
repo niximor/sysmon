@@ -31,6 +31,7 @@ class AppConfig:
             for option_name, option_type, option_description in options:
                 if option_type == bool:
                     parser.add_argument("--%s" % (option_name, ), action="store_true", help=option_description)
+                    parser.add_argument("--no-%s" % (option_name, ), action="store_false", help=option_description)
                 else:
                     parser.add_argument("--%s" % (option_name, ), type=option_type, help=option_description)
 
@@ -71,8 +72,21 @@ class AppConfig:
         else:
             return option_type(val)
 
+    @staticmethod
     def _get_bool(val):
-        return val == "1" or (isinstance(val, (str, unicode)) and val.lower() == "true") or bool(val)
+        if isinstance(val, bool):
+            return val
+        elif isinstance(val, (str, unicode)):
+            if val == "1" or val.lower() == "true":
+                return True
+            elif val == "0" or val.lower() == "false":
+                return False
+            else:
+                raise ValueError(val)
+        elif isinstance(val, (int, float)):
+            return bool(val)
+        else:
+            raise ValueError(val)
 
     def setup_logging(self):
         root = logging.getLogger()

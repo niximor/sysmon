@@ -1,3 +1,15 @@
+gcm-sysmon-collector (2.0.5) xenial; urgency=medium
+
+  * Unittests for _get_bool method, method fixed.
+
+ -- Michal Kuchta <niximor@gmail.com>  Mon, 20 Mar 2017 11:46:15 +0100
+
+gcm-sysmon-collector (2.0.4) xenial; urgency=medium
+
+  * Error in lib _get_bool method.
+
+ -- Michal Kuchta <niximor@gmail.com>  Mon, 20 Mar 2017 10:57:26 +0100
+
 gcm-sysmon-collector (2.0.3) xenial; urgency=medium
 
   * Added missing option.
