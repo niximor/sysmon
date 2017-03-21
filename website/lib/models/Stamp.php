@@ -67,7 +67,7 @@ class Stamp {
         }
 
         // Dismiss alerts
-        $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0 WHERE `stamp_id` = ".escape($db, $stamp_id)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
+        $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `stamp_id` = ".escape($db, $stamp_id)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);
         $db->commit();
     }
 
