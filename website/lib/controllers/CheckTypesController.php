@@ -108,14 +108,19 @@ class CheckTypesController extends TemplatedController {
         }
 
         $readings = [];
-        $q = $db->query("SELECT `name`, `data_type`, `precision`, `type`, `compute` FROM `readings` WHERE `check_type_id` = ".escape($db, $id)) or fail($db->error);
+
+        $q = $db->query("SELECT `name`, `data_type`, `precision`, `type`, `compute`, `label`
+            FROM `readings`
+            WHERE `check_type_id` = ".escape($db, $id)) or fail($db->error);
+
         while ($a = $q->fetch_array()) {
             $readings[] = [
                 "name" => $a["name"],
                 "data_type" => $a["data_type"],
                 "precision" => $a["precision"],
                 "type" => $a["type"],
-                "compute" => $a["compute"]
+                "compute" => $a["compute"],
+                "label" => $a["label"]
             ];
         }
 
@@ -201,19 +206,21 @@ class CheckTypesController extends TemplatedController {
                         `data_type` = ".escape($db, $reading["data_type"] ?? "raw").",
                         `precision` = ".escape($db, $reading["precision"] ?? "0").",
                         `type` = ".escape($db, $reading["type"] ?? "GAUGE").",
-                        `compute` = ".escape($db, $reading["compute"] ?? "")."
+                        `compute` = ".escape($db, $reading["compute"] ?? "").",
+                        `label` = ".escape($db, (!empty($reading["label"]))?$reading["label"]:NULL)."
                     WHERE
                         `id` = ".escape($db, $readings[$reading["name"]]["id"])) or fail($db->error);
                 $readings[$reading["name"]]["found"] = true;
             } else {
-                $db->query("INSERT INTO `readings` (`name`, `check_type_id`, `data_type`, `precision`, `type`, `compute`)
+                $db->query("INSERT INTO `readings` (`name`, `check_type_id`, `data_type`, `precision`, `type`, `compute`, `label`)
                             VALUES (
                                 ".escape($db, $reading["name"]).",
                                 ".escape($db, $check_id).",
                                 ".escape($db, $reading["data_type"] ?? "raw").",
                                 ".escape($db, $reading["precision"] ?? "0").",
                                 ".escape($db, $reading["type"] ?? "GAUGE").",
-                                ".escape($db, $reading["compute"] ?? "")."
+                                ".escape($db, $reading["compute"] ?? "").",
+                                ".escape($db, (!empty($reading["label"]))?$reading["label"]:NULL)."
                             )");
                 $readings[$reading["name"]] = [
                     "id" => $db->insert_id,

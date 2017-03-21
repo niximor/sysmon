@@ -143,7 +143,22 @@ class ChecksController extends TemplatedController {
         // Load statistics
         $stats = [];
         $format = "raw";
-        $q = $db->query("SELECT `r`.`name`, `r`.`data_type`, `r`.`precision`, `r`.`id`, MIN(`v`.`value`) AS `min`, MAX(`v`.`value`) AS `max`, AVG(`v`.`value`) AS `avg` FROM `readings_".$granularity."` `v` JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`) WHERE `check_id` = ".escape($db, $check["id"])." AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW() GROUP BY `v`.`reading_id` ORDER BY `r`.`name` ASC") or fail($db->error);
+        $q = $db->query("SELECT
+                COALESCE(`r`.`label`, `r`.`name`) AS `name`,
+                `r`.`data_type`,
+                `r`.`precision`,
+                `r`.`id`,
+                MIN(`v`.`value`) AS `min`,
+                MAX(`v`.`value`) AS `max`,
+                AVG(`v`.`value`) AS `avg`
+            FROM `readings_".$granularity."` `v`
+            JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)
+            WHERE
+                `check_id` = ".escape($db, $check["id"])."
+                AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW()
+            GROUP BY `v`.`reading_id`
+            ORDER BY `r`.`name` ASC") or fail($db->error);
+
         while ($a = $q->fetch_array()) {
             $qcur = $db->query("SELECT `value` FROM `readings_".$granularity."` WHERE `check_id` = ".escape($db, $check["id"])." AND `reading_id` = ".escape($db, $a["id"])." ORDER BY `datetime` DESC LIMIT 1") or fail($db->error);
             $cur = $qcur->fetch_array();
@@ -307,7 +322,21 @@ class ChecksController extends TemplatedController {
 
         $type_id = $a["check_type_id"];
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`data_type`, `r`.`precision`, `r`.`type`, `r`.`compute`, IF(`cr`.`chart_id` IS NULL, 0, 1) AS `used` FROM `readings` `r` LEFT JOIN `check_chart_readings` `cr` ON (`r`.`id` = `cr`.`reading_id` AND `cr`.`chart_id` = ".escape($db, $chart_id).") WHERE `r`.`check_type_id` = ".escape($db, $type_id)) or fail($db->error);
+        $q = $db->query("SELECT
+                    `r`.`id`,
+                    `r`.`name`,
+                    `r`.`data_type`,
+                    `r`.`precision`,
+                    `r`.`type`,
+                    `r`.`compute`,
+                    IF(`cr`.`chart_id` IS NULL, 0, 1) AS `used`,
+                    COALESCE(`cr`.`label`, `r`.`label`, `r`.`name`) AS `label`,
+                    `cr`.`color` AS `color`,
+                    `cr`.`stack` AS `stack`,
+                    `cr`.`type` AS `line_type`
+                FROM `readings` `r`
+                LEFT JOIN `check_chart_readings` `cr` ON (`r`.`id` = `cr`.`reading_id` AND `cr`.`chart_id` = ".escape($db, $chart_id).")
+                WHERE `r`.`check_type_id` = ".escape($db, $type_id)) or fail($db->error);
 
         $used = [];
         while ($a = $q->fetch_array()) {
@@ -318,7 +347,11 @@ class ChecksController extends TemplatedController {
                 "precision" => (int)$a["precision"],
                 "type" => $a["type"],
                 "compute" => $a["compute"],
-                "used" => $a["used"]
+                "used" => $a["used"],
+                "label" => $a["label"],
+                "color" => $a["color"],
+                "stack" => $a["stack"] == "1",
+                "line_type" => $a["line_type"]
             ];
 
             if ($a["used"] == "1") {
@@ -331,7 +364,19 @@ class ChecksController extends TemplatedController {
         $now = ceil(time() / $seconds) * $seconds;
 
         if (!empty($readings)) {
-            $q = $db->query("SELECT `v`.`reading_id`, UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`, `v`.`value` FROM `readings_".$granularity."` `v` WHERE `v`.`check_id` = ".escape($db, $id)." AND `v`.`reading_id` IN (".implode(",", array_map(function($r) { return $r["id"]; }, $readings)).") AND `v`.`datetime` BETWEEN DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -".$interval.") AND FROM_UNIXTIME(".$now.") ORDER BY `check_id` ASC, `reading_id` ASC, `datetime` ASC") or fail($db->error);
+            $q = $db->query("SELECT
+                    `v`.`reading_id`,
+                    UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`,
+                    `v`.`value`
+                    FROM `readings_".$granularity."` `v`
+                    WHERE
+                        `v`.`check_id` = ".escape($db, $id)."
+                        AND `v`.`reading_id` IN (".implode(",", array_map(function($r) { return $r["id"]; }, $readings)).")
+                        AND `v`.`datetime` BETWEEN DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -".$interval.") AND FROM_UNIXTIME(".$now.")
+                    ORDER BY
+                        `check_id` ASC,
+                        `reading_id` ASC,
+                        `datetime` ASC") or fail($db->error);
 
             $last_reading_values = [];
 
@@ -359,6 +404,8 @@ class ChecksController extends TemplatedController {
                             $value = (float)$a["value"];
                         }
                     }
+
+                    $last_reading_values[$a["reading_id"]] = (float)$a["value"];;
                 }
 
                 $series[$optimized_timestamp][(int)$a["reading_id"]] = $value;
@@ -391,8 +438,8 @@ class ChecksController extends TemplatedController {
             foreach ($compute as $reading) {
                 for ($t = $from; $t <= $now; $t += $seconds) {
                     $variables = [];
-                    foreach ($readings as $reading) {
-                        $variables[$reading["name"]] = $series[$t][(int)$reading["id"]];
+                    foreach ($readings as $r) {
+                        $variables[$r["name"]] = $series[$t][(int)$r["id"]];
                     }
 
                     $series[$t][(int)$reading["id"]] = $this->compute($reading["compute"], $variables);
@@ -425,8 +472,11 @@ class ChecksController extends TemplatedController {
     protected function compute($rpn, $variables) {
         $ops = explode(",", $rpn);
         $stack = [];
+        $debug = false;
 
-        //echo "Compute ".implode(",", $ops)." with ".var_export($variables, true)."<br />";
+        if ($debug) {
+            echo "Compute ".implode(",", $ops)." with ".var_export($variables, true)."<br />";
+        }
 
         foreach ($ops as $op) {
             $op = trim($op);
@@ -878,12 +928,16 @@ class ChecksController extends TemplatedController {
                     break;
             }
 
-            //echo "Stack = ".var_export($stack, true)."<br />";
+            if ($debug) {
+                echo "Stack = ".var_export($stack, true)."<br />";
+            }
         }
 
         $resp = array_pop($stack);
 
-        //echo "Result = ".$resp."<br />";
+        if ($debug) {
+            echo "Result = ".$resp."<br />";
+        }
 
         return $resp;
     }

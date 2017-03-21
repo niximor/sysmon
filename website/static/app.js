@@ -9,6 +9,7 @@ var formatters = {
 
     "bytes": function(val, axis) {
         var i = 0;
+        val = Math.abs(val);
         while (val >= 1024) {
             val /= 1024;
             ++i;
@@ -44,6 +45,8 @@ function chart(container, series, granularity, formatter, precision) {
         }
     };
 
+    var colors = ["#00cc00", "#0066b3", "#ff8000", "#ffcc00", "#330099", "#990099", "#ccff00", "#ff0000", "#808080"];
+
     $.plot(container, series, {
         xaxis: {
             mode: "time",
@@ -66,7 +69,7 @@ function chart(container, series, granularity, formatter, precision) {
         legend: {
             show: true,
         },
-        colors: ["#00cc00", "#0066b3", "#ff8000", "#ffcc00", "#330099", "#990099", "#ccff00", "#ff0000", "#808080"]
+        colors: colors
     });
 }
 
@@ -100,10 +103,22 @@ function charts_multiple(charts, url_base) {
                         ser[s][0] *= 1000;
                     }
 
-                    series.push({
-                        label: reading.name,
+                    var serie = {
+                        label: reading.label,
                         data: ser
-                    });
+                    };
+
+                    if (reading.color) {
+                        serie["color"] = reading.color;
+                    }
+
+                    if (reading.line_type == 'area') {
+                        serie["lines"] = {
+                            "fill": 0.5
+                        };
+                    }
+
+                    series.push(serie);
                 }
 
                 chart(chart_container, series, gran, formatters[formatter], precision);

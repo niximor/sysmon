@@ -1,3 +1,42 @@
+<div class="modal fade" id="readingDetail" tabindex="-1" role="dialog" aria-labeledby="readingDetailLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="readingDetailLabel">Reading detail</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label for="readingLabel" class="control-label">Label:</label>
+                        <input type="text" class="form-control" id="readingLabel" />
+                    </div>
+                    <div class="form-group">
+                        <label for="readingColor" class="control-label">Color:</label>
+                        <input type="text" class="form-control" id="readingColor" />
+                    </div>
+                    <div class="form-group">
+                        <label for="readingType" class="control-label">Type:</label>
+                        <select id="readingType" class="form-control">
+                            <option value="line">Line</option>
+                            <option value="area">Area</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="checkbox">
+                            <label><input type="checkbox" id="readingStacked"> Stacked</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 function updateReadings() {
     var type_id = $("#inputType").val();
@@ -16,8 +55,74 @@ function updateReadings() {
     })
 }
 
+function updateLabels(button) {
+    var reading_id = button.data("reading-id");
+    var parent = button.parent();
+
+    $(">.label", parent).remove();
+
+    if (button.data("label") != "") {
+        button.before("<span class=\"label label-default\">Label: " + button.data("label") + "<input type=\"hidden\" name=\"properties[" + reading_id.toString() + "][label]\" value=\"" + button.data("label") + "\" /></span>\n");
+    }
+
+    if (button.data("color") != "") {
+        button.before("<span class=\"label label-default\" style=\"background-color: " + button.data("color") + "\">&nbsp;<input type=\"hidden\" name=\"properties[" + reading_id.toString() + "][color]\" value=\"" + button.data("color") + "\" /></span>\n");
+    }
+
+    if (button.data("type") && button.data("type") != "line") {
+        button.before("<span class=\"label label-default\">" + button.data("type") + "<input type=\"hidden\" name=\"properties[" + reading_id.toString() + "][type]\" value=\"" + button.data("type") + "\" /></span>\n");
+    }
+
+    if (button.data("stacked") == "1") {
+        button.before("<span class=\"label label-default\">Stacked<input type=\"hidden\" name=\"properties[" + reading_id.toString() + "][stacked]\" value=\"" + button.data("stacked") + "\" /></span>\n");
+    }
+}
+
 $(function(){
     $("#inputType").change(updateReadings);
     updateReadings();
+
+    $("#readingDetail").on("show.bs.modal", function(event) {
+        var modal = $(this);
+        var button = $(event.relatedTarget);
+
+        modal.find("#readingLabel").val(button.data("label"));
+        modal.find("#readingColor").val(button.data("color"));
+        modal.find("#readingType").val(button.data("type"));
+        modal.find("#readingStacked").prop("checked", (button.data("stacked") == "1"));
+
+        $(">p.help-block", modal.find("#readingColor").parent().removeClass("has-error")).remove();
+
+        modal.find(".btn-primary").click(function(){
+            button.data("label", modal.find("#readingLabel").val());
+
+            var color = modal.find("#readingColor").val();
+
+            if (color != "" && color[0] != "#") {
+                color = "#" + color;
+            }
+
+            $(">p.help-block", modal.find("#readingColor").parent().removeClass("has-error")).remove();
+            if (color != "" && !color.match(/^#[0-9a-fA-F]{6}$/)) {
+                modal.find("#readingColor")
+                    .parent().addClass("has-error")
+                    .append("<p class=\"help-block\">Must contain valid color in the form #RRGGBB where each of RR, GG, BB pair has value 00-FF (HEX).</p>");
+                return;
+            }
+
+            button.data("color", color);
+
+            button.data("type", modal.find("#readingType").val());
+            button.data("stacked", (modal.find("#readingStacked").prop("checked") == true)?"1":"0");
+
+            updateLabels(button);
+
+            modal.modal('hide');
+        });
+    });
+
+    $(".readingDetailBtn").each(function(){
+        updateLabels($(this));
+    });
 });
 </script>

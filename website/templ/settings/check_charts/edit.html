@@ -36,8 +36,12 @@
                 <label class="col-sm-2 control-label">Readings:</label>
                 <div class="col-sm-10">
                     {% for reading in all_readings %}
-                    <div class="checkbox">
-                        <label><input type="checkbox" name="readings[]" value="{{ reading.id }}"{% if reading.selected %} checked{% endif%} /> {{ reading.name }}</label>
+                    <div class="checkbox" data-type-id="{{ reading.check_type_id }}">
+                        <label>
+                            <input type="checkbox" name="readings[]" value="{{ reading.id }}"{% if reading.selected %} checked{% endif%} />
+                            {{ reading.r_label }} <span class="text-muted">({{ reading.name }})</span>
+                            <button type="button" class="btn btn-link btn-xs readingDetailBtn" data-toggle="modal" data-target="#readingDetail" data-reading-id="{{ reading.id }}" data-color="{{ reading.color }}" data-stack="{{ reading.stack }}" data-label="{{ reading.label }}" data-type="{{ reading.type }}"><span class="fa fa-edit"></span></button>
+                        </label>
                     </div>
                     {% endfor %}
                 </div>

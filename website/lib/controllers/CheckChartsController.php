@@ -39,13 +39,14 @@ class CheckChartsController extends TemplatedController {
     public function add() {
         $db = connect();
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`check_type_id`, 0 AS `selected` FROM `readings` `r` ORDER BY `r`.`name` ASC") or fail($db->error);
+        $q = $db->query("SELECT `r`.`id`, `r`.`name`, COALESCE(`r`.`label`, `r`.`name`) AS `r_label`, `r`.`check_type_id`, 0 AS `selected` FROM `readings` `r` ORDER BY `r`.`name` ASC") or fail($db->error);
 
         $all_readings = [];
         while ($a = $q->fetch_array()) {
             $all_readings[] = [
                 "id" => $a["id"],
                 "name" => $a["name"],
+                "r_label" => $a["r_label"],
                 "check_type_id" => $a["check_type_id"],
                 "selected" => (bool)$a["selected"]
             ];
@@ -89,15 +90,29 @@ class CheckChartsController extends TemplatedController {
             throw new EntityNotFound("Chart was not found.");
         }
 
-        $q = $db->query("SELECT `r`.`id`, `r`.`name`, `r`.`check_type_id`, `chr`.`reading_id` IS NOT NULL AS `selected` FROM `readings` `r` LEFT JOIN `check_chart_readings` `chr` ON (`r`.`id` = `chr`.`reading_id` AND `chr`.`chart_id` = ".escape($db, $chart["id"]).") ORDER BY `r`.`name` ASC") or fail($db->error);
+        $q = $db->query("SELECT
+                `r`.`id`,
+                `r`.`name` AS `name`,
+                COALESCE(`r`.`label`, `r`.`name`) AS `r_label`,
+                `r`.`check_type_id`,
+                `chr`.`reading_id` IS NOT NULL AS `selected`,
+                `chr`.`color`, `chr`.`stack`, `chr`.`label`, `chr`.`type`
+            FROM `readings` `r`
+            LEFT JOIN `check_chart_readings` `chr` ON (`r`.`id` = `chr`.`reading_id` AND `chr`.`chart_id` = ".escape($db, $chart["id"]).")
+            ORDER BY `r`.`name` ASC") or fail($db->error);
 
         $all_readings = [];
         while ($a = $q->fetch_array()) {
             $all_readings[] = [
                 "id" => $a["id"],
                 "name" => $a["name"],
+                "r_label" => $a["r_label"],
                 "check_type_id" => $a["check_type_id"],
-                "selected" => (bool)$a["selected"]
+                "selected" => (bool)$a["selected"],
+                "color" => $a["color"],
+                "stack" => $a["stack"],
+                "label" => $a["label"],
+                "type" => $a["type"]
             ];
         }
 
@@ -114,6 +129,23 @@ class CheckChartsController extends TemplatedController {
                 $db->query("INSERT IGNORE INTO `check_chart_readings` (`chart_id`, `reading_id`) VALUES ".implode(",", array_map(
                     function($reading_id) use ($db, $chart) { return "(".escape($db, $chart["id"]).", ".escape($db, $reading_id).")"; },
                     $readings))) or fail($db->error);
+
+                // Reset all settings to their default values.
+                $db->query("UPDATE `check_chart_readings` SET `order` = DEFAULT, `label` = DEFAULT, `color` = DEFAULT, `stack` = DEFAULT, `type` = DEFAULT WHERE `chart_id` = ".escape($db, $chart["id"]));
+
+                // Update specified settings.
+                foreach ($_REQUEST["properties"] as $reading_id => $properties) {
+                    $query = "UPDATE `check_chart_readings` SET
+                            `order` = COALESCE(".escape($db, $properties["order"] ?? NULL).", DEFAULT(`order`)),
+                            `label` = COALESCE(".escape($db, $properties["label"] ?? NULL).", DEFAULT(`label`)),
+                            `color` = COALESCE(".escape($db, $properties["color"] ?? NULL).", DEFAULT(`color`)),
+                            `stack` = COALESCE(".escape($db, $properties["stack"] ?? NULL).", DEFAULT(`stack`)),
+                            `type` = COALESCE(".escape($db, $properties["type"] ?? NULL).", DEFAULT(`type`))
+                        WHERE
+                            `chart_id` = ".escape($db, $chart["id"])."
+                            AND `reading_id` = ".escape($db, $reading_id);
+                    $db->query($query) or fail($db->error);
+                }
 
                 $db->commit();
 
