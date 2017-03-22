@@ -117,75 +117,12 @@ class ChecksController extends TemplatedController {
 
         list($chart, $readings) = $this->selectChart($db, $check["type_id"]);
 
-        $series = [];
-        $reading_settings = [];
-
-        $interval = NULL;
-        switch ($granularity) {
-            case "daily":
-                $interval = "1 DAY";
-                break;
-
-            case "weekly":
-                $interval = "1 WEEK";
-                break;
-
-            case "monthly":
-                $interval = "1 MONTH";
-                break;
-
-            case "yearly":
-                $interval = "1 YEAR";
-                break;
-        }
-
-        // Load statistics
-        $stats = [];
-        $format = "raw";
-        $q = $db->query("SELECT
-                COALESCE(`r`.`label`, `r`.`name`) AS `name`,
-                `r`.`data_type`,
-                `r`.`precision`,
-                `r`.`id`,
-                MIN(`v`.`value`) AS `min`,
-                MAX(`v`.`value`) AS `max`,
-                AVG(`v`.`value`) AS `avg`
-            FROM `readings_".$granularity."` `v`
-            JOIN `readings` `r` ON (`v`.`reading_id` = `r`.`id`)
-            WHERE
-                `check_id` = ".escape($db, $check["id"])."
-                AND `v`.`datetime` BETWEEN DATE_ADD(NOW(), INTERVAL -".$interval.") AND NOW()
-            GROUP BY `v`.`reading_id`
-            ORDER BY `r`.`name` ASC") or fail($db->error);
-
-        while ($a = $q->fetch_array()) {
-            $qcur = $db->query("SELECT `value` FROM `readings_".$granularity."` WHERE `check_id` = ".escape($db, $check["id"])." AND `reading_id` = ".escape($db, $a["id"])." ORDER BY `datetime` DESC LIMIT 1") or fail($db->error);
-            $cur = $qcur->fetch_array();
-
-            $stats[] = [
-                "name" => $a["name"],
-                "cur" => $cur["value"],
-                "min" => $a["min"],
-                "max" => $a["max"],
-                "avg" => $a["avg"]
-            ];
-
-            $reading_settings[$a["name"]] = [
-                "data_type" => $a["data_type"],
-                "precision" => $a["precision"]
-            ];
-            $format = $a["data_type"];
-        }
-
         return $this->renderTemplate("checks/detail.html", [
             "check" => $check,
             "alerts" => Alert::loadLatest($db, NULL, $check["id"]),
             "chart" => $chart,
-            "format" => $format,
-            "reading_settings" => $reading_settings,
             "granularity" => $granularity,
-            "charts" => $this->loadAllCharts($db, $check["type_id"]),
-            "stats" => $stats,
+            "charts" => $this->loadAllCharts($db, $check["type_id"])
         ]);
     }
 
@@ -460,8 +397,26 @@ class ChecksController extends TemplatedController {
 
         $series_out = [];
 
+        $statistics = [];
+
         foreach ($series as $time => $values) {
             foreach ($values as $reading => $value) {
+                if (!isset($statistics[$reading])) {
+                    $statistics[$reading] = [
+                        "cur" => $value,
+                        "min" => $value,
+                        "max" => $value,
+                        "avg" => (!is_null($value))?$value:0,
+                        "cnt" => (!is_null($value))?1:0
+                    ];
+                } elseif (!is_null($value)) {
+                    $statistics[$reading]["cur"] = $value;
+                    $statistics[$reading]["min"] = min($statistics[$reading]["min"], $value);
+                    $statistics[$reading]["max"] = max($statistics[$reading]["max"], $value);
+                    ++$statistics[$reading]["cnt"];
+                    $statistics[$reading]["avg"] += $value;
+                }
+
                 if (!in_array($reading, $used)) {
                     continue;
                 }
@@ -474,9 +429,18 @@ class ChecksController extends TemplatedController {
             }
         }
 
+        foreach ($statistics as &$stat) {
+            if ($stat["cnt"] > 0) {
+                $stat["avg"] = $stat["avg"] / $stat["cnt"];
+            } else {
+                $stat["avg"] = NULL;
+            }
+        }
+
         return json_encode([
             "readings" => $readings,
-            "series" => $series_out
+            "series" => $series_out,
+            "statistics" => $statistics
         ]);
     }
 

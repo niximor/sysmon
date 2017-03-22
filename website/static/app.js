@@ -118,6 +118,7 @@ function charts_multiple(charts, url_base) {
             var chart_id = chart_data.id;
             var chart_container = chart_data.container;
             var gran = chart_data.granularity;
+            var legend_container = chart_data.legend_container;
 
             return function(data){
                 var series = [];
@@ -157,6 +158,28 @@ function charts_multiple(charts, url_base) {
                 }
 
                 chart(chart_container, series, gran, formatters[formatter], precision);
+
+                // Fill in legend.
+                if (legend_container) {
+                    for (var reading_id in data.statistics) {
+                        if (!data.statistics.hasOwnProperty(reading_id)) {
+                            continue;
+                        }
+
+                        var stats = data.statistics[reading_id];
+                        var reading = data.readings[reading_id];
+
+                        var formatter = formatters[reading.data_type];
+
+                        $(legend_container).append("<tr>"
+                            + "<td>" + data.readings[reading_id].label + "</td>"
+                            + "<td class=\"text-right text-nowrap\">" + formatter(stats["cur"], { tickDecimals: reading.precision }) + "</td>"
+                            + "<td class=\"text-right text-nowrap\">" + formatter(stats["min"], { tickDecimals: reading.precision }) + "</td>"
+                            + "<td class=\"text-right text-nowrap\">" + formatter(stats["max"], { tickDecimals: reading.precision }) + "</td>"
+                            + "<td class=\"text-right text-nowrap\">" + formatter(stats["avg"], { tickDecimals: reading.precision }) + "</td>"
+                            + "</tr>");
+                    }
+                }
             }
         })(charts[c]));
     }

@@ -59,7 +59,7 @@
                     <dd>{{ check.last_check|datetime }}</dd>
                 </dl>
             </div>
-            {% if stats %}
+            {% if charts %}
             <table class="panel-body table table-compacted table-striped table-hover">
                 <thead>
                     <tr>
@@ -70,16 +70,7 @@
                         <th style="width: 12%" class="text-right">Avg</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for reading in stats %}
-                    <tr>
-                        <td>{{ reading.name }}</td>
-                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.cur|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.min|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.max|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                        <td class="text-right text-nowrap"><script>document.write(formatters["{{ reading_settings[reading.name].data_type }}"]({{ reading.avg|round(2) }}, { "tickDecimals": {{ reading_settings[reading.name].precision }} })); </script></td>
-                    </tr>
-                    {% endfor %}
+                <tbody id="legend">
                 </tbody>
             </table>
             {% endif %}
@@ -172,7 +163,7 @@
 <script src="{{ url_for('static', 'flot/jquery.flot.time.min.js') }}"></script>
 <script>
     charts_multiple([
-        {"id": {{ chart.id }}, "container": "#chart", "granularity": "{{ granularity }}"}
+        {"id": {{ chart.id }}, "container": "#chart", "granularity": "{{ granularity }}", "legend_container": "#legend"}
     ], "{{ url_for(['ChecksController', 'chart_data'], {'id': check.id, 'chart_id': '-chart_id-'} ) }}");
 </script>
 
