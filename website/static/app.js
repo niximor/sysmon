@@ -19,6 +19,8 @@ function divide(value, division, units) {
         ++i;
     }
 
+    value *= mult;
+
     return [value, units[i]];
 }
 

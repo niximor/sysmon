@@ -39,6 +39,7 @@ if (Session::get("user_id")) {
 
     require_once "controllers/StampsController.php";
     $router->bind("/stamps", array("StampsController", "index"));
+    $router->bind("/stamps/add", array("StampsController", "add"));
     $router->bind("/stamps/<id>", array("StampsController", "detail"));
 
     require_once "controllers/PackagesController.php";

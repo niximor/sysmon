@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block main %}
-<h1><span class="fa fa-heartbeat"></span> {{ stamp.stamp }} on {{ stamp.hostname }}</h1>
+<h1><span class="fa fa-heartbeat"></span> {{ stamp.stamp }}{% if stamp.hostname %} on {{ stamp.hostname }}{% endif %}</h1>
 
 <ol class="breadcrumb">
     <li><a href="{{ url_for(['StampsController', 'index']) }}">Stamps</a></li>
@@ -15,7 +15,7 @@
         <h3 class="panel-title">Stamp detail</h3>
     </div>
     <div class="panel-body">
-        <form action="" method="post" class="form-horizontal">
+        <form action="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}" method="post" class="form-horizontal">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Stamp name:</label>
                 <div class="col-sm-10">

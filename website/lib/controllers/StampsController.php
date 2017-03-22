@@ -127,6 +127,30 @@ class StampsController extends TemplatedController implements CronInterface {
         ]);
     }
 
+    public function add() {
+        $db = connect();
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $alert_after = parse_duration($_POST["alert_after"]);
+            $server = $_POST["server"] ?? NULL;
+            if (empty($server)) {
+                $server = NULL;
+            }
+
+            $db->query("INSERT INTO `stamps` (`stamp`, `server_id`, `timestamp`, `alert_after`)
+                VALUES (".escape($db, $_REQUEST["name"]).", ".escape($db, $server).", NOW(), ".escape($db, $alert_after).")") or fail($db->error);
+            $db->commit();
+
+            Message::create(Message::SUCCESS, "Stamp has been created.");
+            header("Location: ".twig_url_for(["StampsController", "index"]));
+            exit;
+        }
+
+        return $this->renderTemplate("stamps/add.html", [
+            "servers" => $this->listServers($db)
+        ]);
+    }
+
     public function put($hostname, $stamp) {
         try {
             Stamp::put($stamp, $hostname);

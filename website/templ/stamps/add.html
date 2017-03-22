@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-heartbeat"></span> Add stamp</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['StampsController', 'index']) }}">Stamps</a></li>
+    <li><a href="{{ url_for(['StampsController', 'add']) }}">Add</a></li>
+</ol>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Add stamp</h3>
+    </div>
+    <div class="panel-body">
+        <form action="{{ url_for(['StampsController', 'add']) }}" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Stamp name:</label>
+                <div class="col-sm-10">
+                    <input type="text" name="name" class="form-control" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Host:</label>
+                <div class="col-sm-10">
+                    <select name="server" class="form-control">
+                        <option value=""></option>
+                        {% for server in servers %}
+                        <option value="{{ server.id }}">{{ server.hostname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Set to empty server to allow this stamp to be collected from any server. Set to host to restrict the stamp only to selected host.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Alert after:</label>
+                <div class="col-sm-2">
+                    <input type="text" name="alert_after" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Set to empty to disable stamp checking. You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-10">
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
