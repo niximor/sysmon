@@ -51,8 +51,7 @@ class ChecksController extends TemplatedController {
             JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
             JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
             LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
-            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
-        ";
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)";
 
         if (!empty($where)) {
             $query .= " WHERE ".implode(" AND ", $where);
@@ -364,7 +363,7 @@ class ChecksController extends TemplatedController {
         $now = ceil(time() / $seconds) * $seconds;
 
         if (!empty($readings)) {
-            $q = $db->query("SELECT
+            $query = "SELECT
                     `v`.`reading_id`,
                     UNIX_TIMESTAMP(`v`.`datetime`) AS `timestamp`,
                     `v`.`value`
@@ -376,7 +375,8 @@ class ChecksController extends TemplatedController {
                     ORDER BY
                         `check_id` ASC,
                         `reading_id` ASC,
-                        `datetime` ASC") or fail($db->error);
+                        `datetime` ASC";
+            $q = $db->query($query) or fail($db->error);
 
             $last_reading_values = [];
 
@@ -390,25 +390,33 @@ class ChecksController extends TemplatedController {
                 $value = (float)$a["value"];
                 $reading = $readings[$a["reading_id"]];
 
-                if ($reading["type"] == "COUNTER" || $reading["type"] == "DERIVE") {
-                    if (!isset($last_reading_values[$a["reading_id"]])) {
-                        $last_reading_values[$a["reading_id"]] = $value;
-                        continue;
-                    }
+                if (in_array($reading["type"], ["COUNTER", "DERIVE", "ABSOLUTE"])) {
+                    if ($reading["type"] != "ABSOLUTE") {
+                        if (!isset($last_reading_values[$a["reading_id"]])) {
+                            $last_reading_values[$a["reading_id"]] = $value;
+                            continue;
+                        }
 
-                    $last = $last_reading_values[$a["reading_id"]];
-                    $value = ($value - $last);
+                        $last = $last_reading_values[$a["reading_id"]];
+                        $value = ($value - $last);
 
-                    if ($reading["type"] == "DERIVE") {
-                        if ($value < 0) {
-                            $value = (float)$a["value"];
+                        if ($reading["type"] == "DERIVE") {
+                            if ($value < 0) {
+                                $value = (float)$a["value"];
+                            }
                         }
                     }
+
+                    $value /= $seconds;
 
                     $last_reading_values[$a["reading_id"]] = (float)$a["value"];;
                 }
 
-                $series[$optimized_timestamp][(int)$a["reading_id"]] = $value;
+                if (isset($series[$optimized_timestamp][(int)$a["reading_id"]])) {
+                    $series[$optimized_timestamp][(int)$a["reading_id"]] = ($series[$optimized_timestamp][(int)$a["reading_id"]] + $value) / 2;
+                } else {
+                    $series[$optimized_timestamp][(int)$a["reading_id"]] = $value;
+                }
             }
 
             $q = $db->query("SELECT UNIX_TIMESTAMP(DATE_ADD(FROM_UNIXTIME(".$now."), INTERVAL -".$interval.")) AS `from`") or fail($db->error);
@@ -445,6 +453,9 @@ class ChecksController extends TemplatedController {
                     $series[$t][(int)$reading["id"]] = $this->compute($reading["compute"], $variables);
                 }
             }
+
+            // Sort series by time (missing times added as NULL values are after existing ones).
+            ksort($series);
         }
 
         $series_out = [];

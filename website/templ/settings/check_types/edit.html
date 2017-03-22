@@ -66,8 +66,11 @@
                                     <div class="col-sm-10">
                                         <select name="readings[e{{ loop.index }}][data_type]" class="form-control">
                                             <option{% if reading.data_type == 'raw' %} selected{% endif %}>raw</option>
+                                            <option{% if reading.data_type == 'si' %} selected{% endif %}>si</option>
                                             <option{% if reading.data_type == 'time' %} selected{% endif %}>time</option>
                                             <option{% if reading.data_type == 'bytes' %} selected{% endif %}>bytes</option>
+                                            <option{% if reading.data_type == 'Bps' %} selected{% endif %}>Bps</option>
+                                            <option{% if reading.data_type == 'bps' %} selected{% endif %}>bps</option>
                                             <option{% if reading.data_type == 'percent' %} selected{% endif %}>percent</option>
                                         </select>
                                     </div>
@@ -85,6 +88,7 @@
                                             <option{% if reading.type == 'GAUGE' %} selected{% endif %}>GAUGE</option>
                                             <option{% if reading.type == 'COUNTER' %} selected{% endif %}>COUNTER</option>
                                             <option{% if reading.type == 'DERIVE' %} selected{% endif %}>DERIVE</option>
+                                            <option{% if reading.type == 'ABSOLUTE' %} selected{% endif %}>ABSOLUTE</option>
                                             <option{% if reading.type == 'COMPUTE' %} selected{% endif %}>COMPUTE</option>
                                         </select>
                                     </div>

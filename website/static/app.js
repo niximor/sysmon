@@ -1,6 +1,35 @@
+function divide(value, division, units) {
+    if (division == undefined) {
+        division = 1000;
+    }
+
+    if (units == undefined) {
+        units = ["", "k", "M", "G", "B", "T", "P", "E", "Z", "Y"];
+    }
+
+    var mult = 1;
+    if (value < 0) {
+        mult = -1;
+        value *= -1;
+    }
+
+    var i = 0;
+    while (value >= division && i < units.length-1) {
+        value /= division;
+        ++i;
+    }
+
+    return [value, units[i]];
+}
+
 var formatters = {
     "raw": function(val, axis) {
         return val.toFixed(axis.tickDecimals);
+    },
+
+    "si": function(val, axis) {
+        var val = divide(val);
+        return val[0].toFixed(axis.tickDecimals) + " " + val[1];
     },
 
     "time": function(val, axis) {
@@ -8,14 +37,18 @@ var formatters = {
     },
 
     "bytes": function(val, axis) {
-        var i = 0;
-        val = Math.abs(val);
-        while (val >= 1024) {
-            val /= 1024;
-            ++i;
-        }
+        var val = divide(val, 1024, ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]);
+        return val[0].toFixed(axis.tickDecimals) + " " + val[1];
+    },
 
-        return val.toFixed(axis.tickDecimals) + " " + ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"][i];
+    "Bps": function(val, axis) {
+        var val = divide(val, 1024, ["B/s", "kB/s", "MB/s", "GB/s", "TB/s", "PB/s", "EB/s", "ZB/s", "YB/s"]);
+        return val[0].toFixed(axis.tickDecimals) + " " + val[1];
+    },
+
+    "bps": function(val, axis) {
+        var val = divide(val * 8, 1024, ["b/s", "kb/s", "Mb/s", "Gb/s", "Tb/s", "Pb/s", "Eb/s", "Zb/s", "Yb/s"]);
+        return val[0].toFixed(axis.tickDecimals) + " " + val[1];
     },
 
     "percent": function(val, axis) {
