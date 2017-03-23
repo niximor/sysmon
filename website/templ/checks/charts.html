@@ -4,7 +4,7 @@
 
 <ol class="breadcrumb">
     <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
-    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a> on <a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
     <li><a href="{{ url_for(['ChecksController', 'charts'], {'id': check.id}) }}">Charts</a></li>
 </ol>
 
@@ -24,9 +24,10 @@
             <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id }) }}">
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart{{ chart.id }}_daily"></div>
+                         <div id="chart{{ chart.id }}_daily" data-legend="#chart{{ chart.id }}_daily_legend"></div>
                     </div>
                 </div>
+                <div id="chart{{ chart.id }}_daily_legend" class="chart-legend"></div>
             </a>
         </div>
 
@@ -35,9 +36,10 @@
             <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id }) }}">
                 <div class="chart-container">
                     <div class="chart">
-                        <div id="chart{{ chart.id }}_weekly"></div>
+                        <div id="chart{{ chart.id }}_weekly" data-legend="chart{{ chart.id }}_weekly_legend"></div>
                     </div>
                 </div>
+                <div id="chart{{ chart.id }}_weekly_legend" class="chart-legend"></div>
             </a>
         </div>
     </div>

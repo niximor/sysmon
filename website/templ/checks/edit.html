@@ -4,7 +4,7 @@
 
 <ol class="breadcrumb">
     <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
-    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a> on <a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
     <li><a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}">Modify</a></li>
 </ol>
 

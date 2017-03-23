@@ -128,7 +128,15 @@ class ChecksController extends TemplatedController {
 
     public function charts($id) {
         $db = connect();
-        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id` FROM `checks` `ch` WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
+        $q = $db->query("SELECT
+            `ch`.`id`,
+            `ch`.`name`,
+            `ch`.`type_id`,
+            `ch`.`server_id`,
+            `s`.`hostname`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
+            WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
 
         $check = $q->fetch_array();
         if (!$check) {
@@ -146,7 +154,7 @@ class ChecksController extends TemplatedController {
     public function chart_detail($check_id, $chart_id) {
         $db = connect();
 
-        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id` FROM `checks` `ch` WHERE `ch`.`id` = ".escape($db, $check_id)) or fail($db->error);
+        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id`, `s`.`hostname` FROM `checks` `ch` JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`) WHERE `ch`.`id` = ".escape($db, $check_id)) or fail($db->error);
 
         $check = $q->fetch_array();
         if (!$check) {
@@ -974,8 +982,13 @@ class ChecksController extends TemplatedController {
                 `ch`.`type_id`,
                 `ch`.`params`,
                 `ch`.`enabled`,
-                `g`.`name` AS `group`
-            FROM `checks` `ch` LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`) WHERE `ch`.`id` = ".escape($db, $id)) or fail($db->error);
+                `g`.`name` AS `group`,
+                `s`.`hostname`
+            FROM `checks` `ch`
+            LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
+            JOIN `servers` `s` ON (`ch`.`server_id` = `s`.`id`)
+            WHERE
+                `ch`.`id` = ".escape($db, $id)) or fail($db->error);
         $a = $q->fetch_array();
 
         if (!$a) {

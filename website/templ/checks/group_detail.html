@@ -36,9 +36,10 @@ var charts = [];
             <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': check.chart_id }) }}">
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_daily"></div>
+                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_daily" data-legend="#chart_{{ check.id }}_{{ check.chart_id }}_daily_legend"></div>
                     </div>
                 </div>
+                <div id="chart_{{ check.id }}_{{ check.chart_id }}_daily_legend" class="chart-legend"></div>
             </a>
         </div>
         <div class="col-sm-6">
@@ -46,8 +47,9 @@ var charts = [];
             <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': check.chart_id }) }}">
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_weekly"></div>
+                         <div id="chart_{{ check.id }}_{{ check.chart_id }}_weekly" data-legend="#chart_{{ check.id }}_{{ check.chart_id }}_weekly_legend"></div>
                     </div>
+                    <div id="chart_{{ check.id }}_{{ check.chart_id }}_weekly_legend" class="chart-legend"></div>
                 </div>
             </a>
         </div>

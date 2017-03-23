@@ -82,6 +82,12 @@ function chart(container, series, granularity, formatter, precision) {
 
     var colors = ["#00cc00", "#0066b3", "#ff8000", "#ffcc00", "#330099", "#990099", "#ccff00", "#ff0000", "#808080"];
 
+    container = $(container);
+    var legend_container = null;
+    if (container.data("legend")) {
+        legend_container = container.data("legend");
+    }
+
     $.plot(container, series, {
         xaxis: {
             mode: "time",
@@ -103,6 +109,8 @@ function chart(container, series, granularity, formatter, precision) {
         },
         legend: {
             show: true,
+            position: "nw",
+            container: legend_container
         },
         colors: colors
     });

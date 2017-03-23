@@ -4,7 +4,7 @@
 
 <ol class="breadcrumb">
     <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
-    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a> on <a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
 </ol>
 
 <div class="btn-toolbar">
@@ -114,9 +114,10 @@
                 <a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id }) }}">
                     <div class="chart-container">
                         <div class="chart">
-                             <div id="chart"></div>
+                             <div id="chart" data-legend="chart_legend"></div>
                         </div>
                     </div>
+                    <div id="chart_legend" class="chart-legend"></div>
                 </a>
             </div>
         </div>

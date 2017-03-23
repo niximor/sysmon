@@ -3,10 +3,18 @@
 <h1><span class="fa fa-hand-o-right"></span> {{ check.name }}</h1>
 
 <ol class="breadcrumb">
-    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+{% if request.from == 'host' %}
+    <li><a href="{{ url_for(['HostsController', 'index']) }}">Hosts</a></li>
+    <li><a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
+    <li><a href="{{ url_for(['HostsController', 'charts'], {'id': check.server_id}) }}">Charts</a></li>
     <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id}) }}">{{ chart.name }}</a></li>
+{% else %}
+    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a> on <a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
     <li><a href="{{ url_for(['ChecksController', 'charts'], {'id': check.id}) }}">Charts</a></li>
     <li><a href="{{ url_for(['ChecksController', 'chart_detail'], {'check_id': check.id, 'chart_id': chart.id}) }}">{{ chart.name }}</a></li>
+{% endif %}
 </ol>
 
 <div class="panel panel-default">
@@ -20,18 +28,20 @@
                 <h3>Daily</h3>
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_daily"></div>
+                         <div id="chart_daily" data-legend="chart_daily_legend"></div>
                     </div>
                 </div>
+                <div id="chart_daily_legend" class="chart-legend"></div>
             </div>
 
             <div class="col-sm-6">
                 <h3>Weekly</h3>
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_weekly"></div>
+                         <div id="chart_weekly" data-legend="chart_weekly_legend"></div>
                     </div>
                 </div>
+                <div id="chart_weekly_legend" class="chart-legend"></div>
             </div>
         </div>
 
@@ -40,18 +50,20 @@
                 <h3>Monthly</h3>
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_monthly"></div>
+                         <div id="chart_monthly" data-legend="chart_monthly_legend"></div>
                     </div>
                 </div>
+                <div id="chart_monthly_legend" class="chart-legend"></div>
             </div>
 
             <div class="col-sm-6">
                 <h3>Yearly</h3>
                 <div class="chart-container">
                     <div class="chart">
-                         <div id="chart_yearly"></div>
+                         <div id="chart_yearly" data-legend="chart_yearly_legend"></div>
                     </div>
                 </div>
+                <div id="chart_yearly_legend" class="chart-legend"></div>
             </div>
         </div>
     </div>
