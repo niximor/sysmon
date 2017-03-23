@@ -63,40 +63,42 @@
     <div class="panel-heading clearfix">
         <h2 class="panel-title">Latest alerts</h2>
     </div>
-    <table class="panel-body table table-striped table-condensed table-hover">
-        <thead>
-            <tr>
-                <th>When</th>
-                <th>Source</th>
-                <th>Message</th>
-                <th class="td-shrink"></th>
-            </tr>
-        </thead>
-
-        <tbody>
-            {% for alert in alerts %}
-                <tr{% if alert.active %} class="danger"{% endif %}>
-                    <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d G:i:s") }}</td>
-                    <td class="text-nowrap">
-                        {% if alert.check %}
-                            <a href="{{ url_for(["ChecksController", "detail"], {"id": alert.check_id}) }}"><span class="fa fa-hand-o-right"></span> {{ alert.check }}</a>
-                        {% else %}
-                            <a href="{{ url_for(["HostsController", "detail"], {"id": alert.server_id}) }}"><span class="fa fa-hdd-o"></span> {{ alert.hostname }}</a>
-                        {% endif %}
-                    </td>
-                    <td>{{ alert.getMessage()|raw }}</td>
-                    <td class="td-shrink">
-                        {% if alert.active %}
-                        <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}">Dismiss</a>
-                        {% endif %}
-                    </td>
-                </tr>
-            {% else %}
+    <div class="table-responsive">
+        <table class="panel-body table table-striped table-condensed table-hover">
+            <thead>
                 <tr>
-                    <td colspan="3"><div class="well">Hooray, no alerts to show.</div></td>
+                    <th>When</th>
+                    <th>Source</th>
+                    <th>Message</th>
+                    <th class="td-shrink"></th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+
+            <tbody>
+                {% for alert in alerts %}
+                    <tr{% if alert.active %} class="danger"{% endif %}>
+                        <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d G:i:s") }}</td>
+                        <td class="text-nowrap">
+                            {% if alert.check %}
+                                <a href="{{ url_for(["ChecksController", "detail"], {"id": alert.check_id}) }}"><span class="fa fa-hand-o-right"></span> {{ alert.check }}</a>
+                            {% else %}
+                                <a href="{{ url_for(["HostsController", "detail"], {"id": alert.server_id}) }}"><span class="fa fa-hdd-o"></span> {{ alert.hostname }}</a>
+                            {% endif %}
+                        </td>
+                        <td>{{ alert.getMessage()|raw }}</td>
+                        <td class="td-shrink">
+                            {% if alert.active %}
+                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}">Dismiss</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3"><div class="well">Hooray, no alerts to show.</div></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

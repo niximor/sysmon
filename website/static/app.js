@@ -214,6 +214,8 @@ function show_help(topic) {
             .text(data.topic.name);
         $("#helpTopicText")
             .html(data.topic.text);
+
+        window.location.hash = "#help";
     });
 }
 
