@@ -10,6 +10,10 @@
     <li><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}">{{ stamp.stamp }}</a></li>
 </ol>
 
+<div class="btn-group">
+    <a href="{{ url_for(['StampsController', 'punchcard'], {'id': stamp.id}) }}" class="btn btn-default"><span class="fa fa-table"></span> Punchcard</a>
+</div>
+
 <div class="panel panel-default">
     <div class="panel-heading clearfix">
         <h3 class="panel-title">Stamp detail</h3>

@@ -151,6 +151,78 @@ class StampsController extends TemplatedController implements CronInterface {
         ]);
     }
 
+    public function punchcard($id) {
+        $db = connect();
+
+        $q = $db->query("SELECT
+                `stamps`.`id`,
+                `stamps`.`stamp`,
+                `stamps`.`server_id`,
+                `servers`.`hostname`
+            FROM `stamps`
+            LEFT JOIN `servers` ON (`stamps`.`server_id` = `servers`.`id`)
+            WHERE
+                `stamps`.`id` = ".escape($db, $id)) or fail($db->error);
+        $stamp = $q->fetch_array();
+
+        $to = time();
+        $from = $to - 7*86400;
+
+        $year_from = escape($db, date("Y", $from));
+        $week_from = escape($db, date("W", $from));
+
+        $year_to = escape($db, date("Y", $to));
+        $week_to = escape($db, date("W", $to));
+
+        $q = $db->query("SELECT
+                SUM(`count`) AS `count`,
+                `day_of_week`,
+                `hour`
+                FROM `stamp_punchcard`
+                WHERE
+                    `stamp_id` = ".escape($db, $stamp["id"])."
+                    AND (
+                        (`year` = ".$year_from." AND `week` >= ".$week_from.")
+                        OR (`year` = ".$year_to." AND `week` <= ".$week_to.")
+                        OR (`year` > ".$year_from." AND `year` < ".$year_to.")
+                    )
+                GROUP BY `day_of_week`, `hour`") or fail($db->error);
+
+        $max = 0;
+        $punchcard = [];
+
+        for ($w = 1; $w <= 7; ++$w) {
+            $punchcard[$w] = [];
+            for ($h = 0; $h < 24; ++$h) {
+                $punchcard[$w][$h] = 0;
+            }
+        }
+
+        while ($a = $q->fetch_array()) {
+            if ($max < $a["count"]) {
+                $max = $a["count"];
+            }
+
+            $punchcard[(int)$a["day_of_week"]][(int)$a["hour"]] = $a["count"];
+        }
+
+        return $this->renderTemplate("stamps/punchcard.html", [
+            "stamp" => $stamp,
+            "punchcard" => $punchcard,
+            "max_punchcard" => $max,
+            "days" => [
+                [1, "Monday"],
+                [2, "Tuesday"],
+                [3, "Wednesday"],
+                [4, "Thursday"],
+                [5, "Friday"],
+                [6, "Saturday"],
+                [7, "Sunday"]
+            ],
+            "hours" => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+        ]);
+    }
+
     public function put($hostname, $stamp) {
         try {
             Stamp::put($stamp, $hostname);

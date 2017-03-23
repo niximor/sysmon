@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-heartbeat"></span> {{ stamp.stamp }}{% if stamp.hostname %} on {{ stamp.hostname }}{% endif %}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['StampsController', 'index']) }}">Stamps</a></li>
+    {% if stamp.hostname %}
+    <li><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></li>
+    {% endif %}
+    <li><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}">{{ stamp.stamp }}</a></li>
+    <li><a href="{{ url_for(['StampsController', 'punchcard'], {'id': stamp.id}) }}">Punchcard</a></li>
+</ol>
+
+<table class="table table-compacted table-striped table-hover">
+    <thead>
+        <tr>
+            <th></th>
+{% for hour in hours %}
+            <th class="th-punch">{{ hour }}</th>
+{% endfor %}
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for day in days %}
+            <tr>
+                <th class="tbody-th-punch">{{ day[1] }}</th>
+                {% for hour in hours %}
+                    {% if max_punchcard > 0 %}
+                        {% set punches = punchcard[day[0]][hour] %}
+                        {% set percent = punches * 100 / max_punchcard %}
+                        <td class="td-punch"{% if punches > 0 %} title="{{ day[1] }} on {{ hour }} hour: {{ punches }} stamps" data-toggle="tooltip" data-placement="top" data-container='body'{% endif %}>
+                            <svg version="1.1" viewBox="0 0 200 200" preserveAspectRatio="xMinYMin meet">
+                                <circle cx="100" cy="100" r="{{ percent }}" />
+                            </svg>
+                        </td>
+                    {% else %}
+                        <td class="td-punch"></td>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script>
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+})
+</script>
+{% endblock %}
