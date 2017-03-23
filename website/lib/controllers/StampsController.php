@@ -170,11 +170,15 @@ class StampsController extends TemplatedController implements CronInterface {
 
         $year_from = escape($db, date("Y", $from));
         $week_from = escape($db, date("W", $from));
+        $dow_from = escape($db, date("N", $from));
+        $hour_from = escape($db, date("G", $from));
 
         $year_to = escape($db, date("Y", $to));
         $week_to = escape($db, date("W", $to));
+        $dow_to = escape($db, date("N", $to));
+        $hour_to = escape($db, date("G", $to));
 
-        $q = $db->query("SELECT
+        $query = "SELECT
                 SUM(`count`) AS `count`,
                 `day_of_week`,
                 `hour`
@@ -182,11 +186,32 @@ class StampsController extends TemplatedController implements CronInterface {
                 WHERE
                     `stamp_id` = ".escape($db, $stamp["id"])."
                     AND (
-                        (`year` = ".$year_from." AND `week` >= ".$week_from.")
-                        OR (`year` = ".$year_to." AND `week` <= ".$week_to.")
+                        (
+                            `year` = ".$year_from."
+                            AND `week` >= ".$week_from."
+                            AND (
+                                `day_of_week` > ".$dow_from."
+                                OR (
+                                    `day_of_week` = ".$dow_from."
+                                    AND `hour` > ".$hour_from."
+                                )
+                            )
+                        )
+                        OR (
+                            `year` = ".$year_to."
+                            AND `week` <= ".$week_to."
+                            AND (
+                                `day_of_week` < ".$dow_to."
+                                OR (
+                                    `day_of_week` = ".$dow_to."
+                                    AND `hour` <= ".$hour_to."
+                                )
+                            )
+                        )
                         OR (`year` > ".$year_from." AND `year` < ".$year_to.")
                     )
-                GROUP BY `day_of_week`, `hour`") or fail($db->error);
+                GROUP BY `day_of_week`, `hour`";
+        $q = $db->query($query) or fail($db->error);
 
         $max = 0;
         $punchcard = [];
