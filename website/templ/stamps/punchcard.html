@@ -11,6 +11,12 @@
     <li><a href="{{ url_for(['StampsController', 'punchcard'], {'id': stamp.id}) }}">Punchcard</a></li>
 </ol>
 
+<div class="text-right">
+    <div class="btn-group">
+        <a href="{{ url_for(['HelpController', 'topic'], {'topic': 'stamps-punchcard'}) }}" onclick="show_help('stamps-punchcard'); return false;" class="btn btn-default"><span class="fa fa-question-circle-o"></span> Help</a>
+    </div>
+</div>
+
 <table class="table table-compacted table-striped table-hover">
     <thead>
         <tr>

@@ -32,9 +32,11 @@
                         <span class="hidden-xs hidden-sr"><span class="fa fa-gear"></span> <span class="caret"></span></span>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}"><span class="fa fa-code"></span> Alert templates</a></li>
-                        <li><a href="{{ url_for(['CheckChartsController', 'index']) }}"><span class="fa fa-area-chart"></span> Check charts</a></li>
-                        <li><a href="{{ url_for(['CheckTypesController', 'index']) }}"><span class="fa fa-hand-o-right"></span> Check types</a></li>
+                        <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}"><span class="fa fa-fw fa-code"></span> Alert templates</a></li>
+                        <li><a href="{{ url_for(['CheckChartsController', 'index']) }}"><span class="fa fa-fw fa-area-chart"></span> Check charts</a></li>
+                        <li><a href="{{ url_for(['CheckTypesController', 'index']) }}"><span class="fa fa-fw fa-hand-o-right"></span> Check types</a></li>
+                        <li class="divider" role="divider"></li>
+                        <li><a href="{{ url_for(['HelpController', 'index']) }}"><span class="fa fa-fw fa-question-circle-o"></span> Help</a></li>
                     </ul>
                 </li>
             </ul>
@@ -48,10 +50,23 @@
     </div>
 </nav>
 
-<div class="container">
+<div class="container" id="main">
     {{ include("messages.html") }}
 
     {% block main %}
     {% endblock %}
+</div>
+<div class="hidden" id="help">
+    <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+            <h3 class="panel-title"><span class="fa fa-question-circle-o"></span> <span id="helpTopicTitle">Help</span></h3>
+            <ul class="panel-tool-options">
+                <li><a href="#" id="helpPanelClose"><span class="fa fa-close"></span></a></li>
+            </ul>
+        </div>
+
+        <div class="panel-body" id="helpTopicText">
+        </div>
+    </div>
 </div>
 {% endblock %}

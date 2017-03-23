@@ -192,3 +192,37 @@ function charts_multiple(charts, url_base) {
         })(charts[c]));
     }
 }
+
+function show_help(topic) {
+    if ($("#help").hasClass("hidden")) {
+        $("#main")
+            .addClass("col-lg-9");
+
+        $("#help")
+            .addClass("col-lg-3")
+            .removeClass("hidden");
+
+        $("#helpTopicTitle")
+            .text("Help");
+
+        $("#helpTopicText")
+            .html("<div style=\"text-align: center\"><span class=\"fa fa-4x fa-spinner\"></span><br /><br /> Loading help topic.</div>");
+    }
+
+    $.getJSON(URL_GET_HELP_TOPIC.replace("-topic-", topic), function(data){
+        $("#helpTopicTitle")
+            .text(data.topic.name);
+        $("#helpTopicText")
+            .html(data.topic.text);
+    });
+}
+
+$(function(){
+    $("#helpPanelClose").click(function(){
+        $("#main")
+            .removeClass("col-lg-9");
+        $("#help")
+            .removeClass("col-lg-3")
+            .addClass("hidden");
+    })
+});

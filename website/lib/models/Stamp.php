@@ -68,17 +68,23 @@ class Stamp {
 
         // Put punchcard entry.
         $now = time();
-        $db->query("INSERT INTO `stamp_punchcard` (`stamp_id`, `year`, `week`, `day_of_week`, `hour`, `count`)
-            VALUES (
-                ".escape($db, $stamp_id).",
-                ".escape($db, date("Y", $now)).",
-                ".escape($db, date("W", $now)).",
-                ".escape($db, date("N", $now)).",
-                ".escape($db, date("G", $now)).",
-                1
-            )
+
+        $db_stamp_id = escape($db, $stamp_id);
+        $year = escape($db, date("Y", $now));
+        $week = escape($db, date("W", $now));
+        $dow = escape($db, date("N", $now));
+        $hour = escape($db, date("G", $now));
+
+        $q = $db->query("SELECT `id` FROM `stamp_punchcard` WHERE
+            `stamp_id` = ".$db_stamp_id." AND `year` = ".$year." AND `week` = ".$week." AND `day_of_week` = ".$dow." AND `hour` = ".$hour." FOR UPDATE") or fail($db->error);
+        if ($a = $q->fetch_array()) {
+            $db->query("UPDATE `stamp_punchcard` SET `count` = `count` + 1 WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+        } else {
+            $db->query("INSERT INTO `stamp_punchcard` (`stamp_id`, `year`, `week`, `day_of_week`, `hour`, `count`)
+            VALUES (".$db_stamp_id.", ".$year.", ".$week.", ".$dow.", ".$hour.", 1)
             ON DUPLICATE KEY UPDATE
-                `count` = `count` + 1");
+                `count` = `count` + 1") or fail($db->error);
+        }
 
         // Dismiss alerts
         $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `stamp_id` = ".escape($db, $stamp_id)." AND `active` = 1 AND `type` = 'stamp'") or fail($db->error);

@@ -2,6 +2,7 @@
     "require": {
         "fabiang/xmpp": "^0.6.1",
         "twig/twig": "^2.1",
-        "monolog/monolog": "^1.22"
+        "monolog/monolog": "^1.22",
+        "michelf/php-markdown": "^1.7"
     }
 }

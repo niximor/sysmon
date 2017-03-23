@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-question-circle-o"></span> Help center</h1>
+
+<ul class="breadcrumb">
+    <li><a href="{{ url_for(['HelpController', 'index']) }}">Help center</a></li>
+</ul>
+
+<div class="btn-group">
+    <a href="{{ url_for(['HelpController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add topic</a>
+</div>
+
+<h2>Help topics</h2>
+<ul>
+{% for topic in topics %}
+    <li><a href="{{ url_for(['HelpController', 'topic'], {'topic': topic.url}) }}">{{ topic.name }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

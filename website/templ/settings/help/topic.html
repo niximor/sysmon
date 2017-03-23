@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-question-circle-o"></span> {{ topic.name }}</h1>
+
+<div class="btn-group">
+    <a href="{{ url_for(['HelpController', 'edit'], {'id': topic.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+    <a href="{{ url_for(['HelpController', 'remove'], {'id': topic.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this topic?');"><span class="fa fa-remove"></span> Remove</a>
+</div>
+
+{{ topic.text|raw }}
+
+<div class="row">
+    <div class="col-sm-4 text-left">
+        {% if previous %}
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': previous.url}) }}" class="btn btn-default">Previous topic</a><br />
+            {{ previous.name }}
+        {% else %}
+            <span class="btn btn-default disabled">Previous topic</span>
+        {% endif %}
+    </div>
+    <div class="col-sm-4 text-center">
+        <a href="{{ url_for(['HelpController', 'index']) }}" class="btn btn-default">Help index</a>
+    </div>
+    <div class="col-sm-4 text-right">
+        {% if next %}
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': next.url}) }}" class="btn btn-default">Next topic</a><br />
+            {{ next.name }}
+        {% else %}
+            <span class="btn btn-default disabled">Next topic</span>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

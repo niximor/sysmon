@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h1><span class="fa fa-question-circle-o"></span> {{ topic.name }}</h1>
+
+<ul class="breadcrumb">
+    <li><a href="{{ url_for(['HelpController', 'index']) }}">Help center</a></li>
+    <li><a href="{{ url_for(['HelpController', 'topic'], {'topic': topic.url}) }}">{{ topic.name }}</a></li>
+    <li><a href="{{ url_for(['HelpController', 'edit'], {'id': topic.id}) }}">Modify</a></li>
+</ul>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h2 class="panel-title">Modify topic</h2>
+    </div>
+    <div class="panel-body">
+        <form action="{{ url_for(['HelpController', 'edit'], {'id': topic.id}) }}" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputName">Name:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="name" value="{{ topic.name }}" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Human readable topic name.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputUrl">Url identifier:</label>
+                <div class="col-sm-10">
+                    <input type="text" class="form-control" name="url" value="{{ topic.url }}" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Identifier that is used in URL to target specific topic.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputName">Text:</label>
+                <div class="col-sm-10">
+                    <textarea class="form-control" name="text" style="height: 20em">{{ topic.text }}</textarea>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        You can use <a href="https://daringfireball.net/projects/markdown/"><span class="fa fa-external-link"></span> Markdown</a> to format the text.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" value="Modify" class="btn btn-primary" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

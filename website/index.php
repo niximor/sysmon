@@ -76,6 +76,14 @@ if (Session::get("user_id")) {
     $router->bind("/settings/check-types/edit/<id>", array("CheckTypesController", "edit"));
     $router->bind("/settings/check-types/remove/<id>", array("CheckTypesController", "remove"));
 
+    require_once "controllers/HelpController.php";
+    $router->bind("/help/", array("HelpController", "index"));
+    $router->bind("/help/add-topic", array("HelpController", "add"));
+    $router->bind("/help/edit-topic/<id>", array("HelpController", "edit"));
+    $router->bind("/help/remove-topic/<id>", array("HelpController", "remove"));
+    $router->bind("/help/get/<topic>", array("HelpController", "get"));
+    $router->bind("/help/<topic>", array("HelpController", "topic"));
+
     require_once "controllers/ProfileController.php";
     $router->bind("/profile", array("ProfileController", "index"));
     $router->bind("/profile/revoke/<session>", array("ProfileController", "revoke"));
