@@ -215,7 +215,8 @@ function show_help(topic) {
         $("#helpTopicText")
             .html(data.topic.text);
 
-        window.location.hash = "#help";
+        // TODO: Scroll only on mobile.
+        //window.location.hash = "#help";
     });
 }
 
