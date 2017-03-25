@@ -10,8 +10,18 @@
     <li><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}">{{ stamp.stamp }}</a></li>
 </ol>
 
-<div class="btn-group">
-    <a href="{{ url_for(['StampsController', 'punchcard'], {'id': stamp.id}) }}" class="btn btn-default"><span class="fa fa-table"></span> Punchcard</a>
+<div class="row">
+    <div class="col-xs-6">
+        <div class="btn-group">
+            <a href="{{ url_for(['StampsController', 'punchcard'], {'id': stamp.id}) }}" class="btn btn-default"><span class="fa fa-table"></span> Punchcard</a>
+        </div>
+    </div>
+
+    <div class="col-xs-6 text-right">
+        <div class="btn-group">
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': 'stamps-detail'}) }}" onclick="show_help('stamps-detail'); return false;" class="btn btn-default"><span class="fa fa-question-circle-o"></span> Help</a>
+        </div>
+    </div>
 </div>
 
 <div class="panel panel-default">
