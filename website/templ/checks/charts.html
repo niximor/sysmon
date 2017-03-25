@@ -3,7 +3,7 @@
 <h1><span class="fa fa-hand-o-right"></span> {{ check.name }}</h1>
 
 <ol class="breadcrumb">
-    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'overview']) }} ">Checks</a></li>
     <li><a href="{{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">{{ check.name }}</a> on <a href="{{ url_for(['HostsController', 'detail'], {'id': check.server_id}) }}">{{ check.hostname }}</a></li>
     <li><a href="{{ url_for(['ChecksController', 'charts'], {'id': check.id}) }}">Charts</a></li>
 </ol>

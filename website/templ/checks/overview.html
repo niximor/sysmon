@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h1><span class="fa fa-finger-right-o"></span> Checks</h1>
+
+<ul class="breadcrumb">
+    <li><a href="{{ url_for(['ChecksController', 'overview']) }}">Checks</a></li>
+</ul>
+
+<div class="row">
+    <div class="col-xs-6">
+        <div class="btn-group">
+            <a href="{{ url_for(['ChecksController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+            <a href="{{ url_for(['ChecksController', 'index']) }}" class="btn btn-default"><span class="fa fa-list"></span> All checks</a>
+        </div>
+    </div>
+
+    <div class="col-xs-6">
+        <div class="btn-group">
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Overview</h3>
+            </div>
+
+            <table class="panel-body table table-condensed table-striped table-hover">
+                <thead>
+                    <th></th>
+                    <th>Checks</th>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><a href="{{ url_for(['ChecksController', 'index']) }}">Total</a></td>
+                        <td class="td-shrink text-nowrap text-right">
+                            {% if total.alerts > 0 %}<span class="label label-danger">{{ total.alerts }}</span>{% endif %}
+                            {% if total.success > 0 %}<span class="label label-success">{{ total.success }}</span>{% endif %}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Hosts</h3>
+            </div>
+
+            <table class="panel-body table table-condensed table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Hostname</th>
+                        <th>Checks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for host in hosts %}
+                        <tr>
+                            <td><a href="{{ url_for(['ChecksController', 'index']) }}?host={{ host.hostname }}">{{ host.hostname }}</a></td>
+                            <td class="td-shrink text-nowrap text-right">
+                                {% if host.alerts > 0 %}<span class="label label-danger">{{ host.alerts }}</span>{% endif %}
+                                {% if host.success > 0 %}<span class="label label-success">{{ host.success }}</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Groups</h3>
+            </div>
+
+            <table class="panel-body table table-condensed table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>Checks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for group in groups %}
+                        <tr>
+                            <td><a href="{{ url_for(['ChecksController', 'index']) }}?group={{ group.id|default(0) }}">{{ group.name|default("No group") }}</a></td>
+                            <td class="td-shrink text-nowrap text-right">
+                                {% if group.alerts > 0 %}<span class="label label-danger">{{ group.alerts }}</span>{% endif %}
+                                {% if group.success > 0 %}<span class="label label-success">{{ group.success }}</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Types</h3>
+            </div>
+
+            <table class="panel-body table table-condensed table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Checks</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for type in types %}
+                        <tr>
+                            <td><a href="{{ url_for(['ChecksController', 'index']) }}?type={{ type.id }}">{{ type.name }}</a></td>
+                            <td class="td-shrink text-nowrap text-right">
+                                {% if type.alerts > 0 %}<span class="label label-danger">{{ type.alerts }}</span>{% endif %}
+                                {% if type.success > 0 %}<span class="label label-success">{{ type.success }}</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

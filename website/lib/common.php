@@ -169,3 +169,68 @@ function changelog(mysqli $db, int $server_id, string $component, string $action
         ]
     ]);
 }
+
+function pagination($rows, $limit, $page, $selfurl) {
+    $display_previous = $page > 0;
+    $previous_url = $selfurl."?".http_build_query(array_merge($_GET, array("page" => $page)));
+
+    $from = max(0, ($page - 5) * $limit);
+    $to = min($rows, ($page + 5) * $limit);
+    $p = floor($from / $limit) + 1;
+
+    $pages = [];
+
+    if ($from > 0) {
+        $pages[] = [
+            "num" => 1,
+            "url" => $selfurl."?".http_build_query(array_merge($_GET, array("page" => 1))),
+            "active" => false
+        ];
+
+        if ($from > $limit) {
+            $pages[] = [
+                "num" => "...",
+                "url" => false,
+                "active" => false
+            ];
+        }
+    }
+
+    for ($i = $from; $i < $to; $i += $limit) {
+        $pages[] = [
+            "num" => $p,
+            "url" => $selfurl."?".http_build_query(array_merge($_GET, array("page" => $p))),
+            "active" => $p == $page + 1
+        ];
+        ++$p;
+    }
+
+    if ($to < $rows) {
+        $maxpage = floor($rows / $limit) + 1;
+        if ($to < ($maxpage - 1) * $limit) {
+            $pages[] = [
+                "num" => "...",
+                "url" => false,
+                "active" => false
+            ];
+        }
+
+        $pages[] = [
+            "num" => $maxpage,
+            "url" => $selfurl."?".http_build_query(array_merge($_GET, array("page" => $maxpage))),
+            "active" => false
+        ];
+    }
+
+    $display_next = $page + 2 < $p;
+    $next_url = $selfurl."?".http_build_query(array_merge($_GET, array("page" => $page + 2)));
+
+    return [
+        "rows" => $rows,
+        "pages" => $pages,
+        "display_previous" => $display_previous,
+        "previous_url" => $previous_url,
+        "display_next" => $display_next,
+        "next_url" => $next_url
+    ];
+}

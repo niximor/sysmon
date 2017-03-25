@@ -24,7 +24,7 @@
                 <li{% if controller == 'HostsController' %} class="active"{% endif %}><a href="{{ url_for(['HostsController', 'index']) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
                 <li{% if controller == 'PackagesController' %} class="active"{% endif %}><a href="{{ url_for(['PackagesController', 'index']) }}"><span class="fa fa-dropbox"></span> Packages</a></li>
                 <li{% if controller == 'StampsController' %} class="active"{% endif %}><a href="{{ url_for(['StampsController', 'index']) }}"><span class="fa fa-heartbeat"></span> Stamps</a></li>
-                <li{% if controller == 'ChecksController' %} class="active"{% endif %}><a href="{{ url_for(['ChecksController', 'index']) }}"><span class="fa fa-hand-o-right"></span> Checks</a></li>
+                <li{% if controller == 'ChecksController' %} class="active"{% endif %}><a href="{{ url_for(['ChecksController', 'overview']) }}"><span class="fa fa-hand-o-right"></span> Checks</a></li>
 
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false" title="Settings">

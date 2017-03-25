@@ -3,7 +3,24 @@
 <h1><span class="fa fa-hand-o-right"></span> Checks</h1>
 
 <ol class="breadcrumb">
-    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'overview']) }} ">Checks</a></li>
+    {% if not get.host and get.group != "" %}
+        {% if get.group == "0" %}
+            <li><a href="{{ url_for(['ChecksController', 'index']) }}?group=0">No group</a></li>
+        {% else %}
+            {% for group in groups %}
+                {% if group.id == get.group %}
+                    <li><a href="{{ url_for(['ChecksController', 'index']) }}?group={{ group.id }}">{{ group.name }}</a></li>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+    {% if get.host and get.group == "" %}
+        <li><a href="{{ url_for(['ChecksController', 'index']) }}?host={{ get.host }}">{{ get.host }}</a></li>
+    {% endif %}
+    {% if not get.host and get.group == "" %}
+        <li><a href="{{ url_for(['ChecksController', 'index']) }}">All</a></li>
+    {% endif %}
 </ol>
 
 <div class="btn-group" role="group">
@@ -14,10 +31,10 @@
     <div class="panel-heading clearfix">
         <h3 class="panel-title">Filter</h3>
         <ul class="panel-tool-options">
-            <li><a data-toggle="collapse" href="#filterBody" aria-expanded="{% if get.name or get.host or get.type or get.group %}true{% else %}false{% endif %}" aria-controls="filterBody"><span class="fa fa-chevron-down"></span></a></li>
+            <li><a data-toggle="collapse" href="#filterBody" aria-expanded="{% if get.name or get.host or get.type or get.group != '' %}true{% else %}false{% endif %}" aria-controls="filterBody"><span class="fa fa-chevron-down"></span></a></li>
         </ul>
     </div>
-    <div class="collapse{% if get.name or get.host or get.type or get.group %} in{% endif %}" id="filterBody">
+    <div class="collapse{% if get.name or get.host or get.type or get.group != '' %} in{% endif %}" id="filterBody">
         <div class="panel-body">
             <form action="{{ url_for(['ChecksController', 'index']) }}" method="get" class="form-horizontal">
                 <div class="form-group">
@@ -38,7 +55,8 @@
                     <label for="inputGroup" class="col-sm-2 control-label">Group:</label>
                     <div class="col-sm-10">
                         <select name="group" id="inputGroup" class="form-control">
-                            <option value=""{% if not request.group %} selected{% endif %}></option>
+                            <option value=""{% if not request.group == "" %} selected{% endif %}></option>
+                            <option value="0"{% if request.group == "0" %} selected{% endif %}>No group</option>
                             {% for group in groups %}
                                 <option value="{{ group.id }}"{% if group.id == request.group %} selected{% endif %}>{{ group.name }}</option>
                             {% endfor %}
@@ -78,6 +96,12 @@
             <th class="td-shrink"></th>
         </tr>
     </thead>
+
+    <tfoot>
+        <tr>
+            <td colspan="6">{% include "pagination.html" %}</td>
+        </tr>
+    </tfoot>
 
     <tbody>
         {% set last_group = "" %}

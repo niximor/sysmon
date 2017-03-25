@@ -5,6 +5,76 @@ require_once "controllers/TemplatedController.php";
 require_once "models/Message.php";
 
 class ChecksController extends TemplatedController {
+    public function overview() {
+        $db = connect();
+
+        $q = $db->query("SELECT
+                COUNT(DISTINCT `ch`.`id`) AS `checks`,
+                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
+            FROM `checks` `ch`
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)");
+
+        $total = $q->fetch_assoc();
+        $total["success"] = $total["checks"] - $total["alerts"];
+
+        $q = $db->query("SELECT
+                `s`.`hostname`,
+                COUNT(DISTINCT `ch`.`id`) AS `checks`,
+                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`ch`.`server_id` = `s`.`id`)
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+            GROUP BY `s`.`id`
+            ORDER BY `s`.`hostname` ASC") or fail($db->error);
+
+        $hosts = [];
+        while ($a = $q->fetch_assoc()) {
+            $a["success"] = $a["checks"] - $a["alerts"];
+            $hosts[] = $a;
+        }
+
+        $q = $db->query("SELECT
+                `g`.`name`,
+                `g`.`id`,
+                COUNT(DISTINCT `ch`.`id`) AS `checks`,
+                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
+            FROM `checks` `ch`
+            LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+            GROUP BY `ch`.`group_id`
+            ORDER BY `g`.`name` ASC") or fail($db->error);
+
+        $groups = [];
+        while ($a = $q->fetch_assoc()) {
+            $a["success"] = $a["checks"] - $a["alerts"];
+            $groups[] = $a;
+        }
+
+        $q = $db->query("SELECT
+                `t`.`name`,
+                `t`.`id`,
+                COUNT(DISTINCT `ch`.`id`) AS `checks`,
+                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
+            FROM `checks` `ch`
+            JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+            GROUP BY `ch`.`type_id`
+            ORDER BY `t`.`name` ASC") or fail($db->error);
+
+        $types = [];
+        while ($a = $q->fetch_assoc()) {
+            $a["success"] = $a["checks"] - $a["alerts"];
+            $types[] = $a;
+        }
+
+        return $this->renderTemplate("checks/overview.html", [
+            "total" => $total,
+            "hosts" => $hosts,
+            "groups" => $groups,
+            "types" => $types
+        ]);
+    }
+
     public function index() {
         $db = connect();
 
@@ -33,11 +103,16 @@ class ChecksController extends TemplatedController {
             $where[] = "`s`.`hostname` LIKE '".$db->real_escape_string(strtr($_REQUEST["host"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
         }
 
-        if (!empty($_REQUEST["group"])) {
-            $where[] = "`ch`.`group_id` = ".escape($db, $_REQUEST["group"]);
+        if (isset($_REQUEST["group"]) && (!empty($_REQUEST["group"]) || $_REQUEST["group"] == "0")) {
+            if ($_REQUEST["group"] == "0") {
+                $where[] = "`ch`.`group_id` IS NULL";
+            } else {
+                $where[] = "`ch`.`group_id` = ".escape($db, $_REQUEST["group"]);
+            }
         }
 
         $query = "SELECT
+                SQL_CALC_FOUND_ROWS
                 `ch`.`id`,
                 `ch`.`enabled`,
                 `ch`.`name`,
@@ -61,6 +136,11 @@ class ChecksController extends TemplatedController {
             GROUP BY `ch`.`id`
             ORDER BY `g`.`name` ".$direction.", `".$order."` ".$direction.", `ch`.`name` ".$direction.", `s`.`hostname` ".$direction;
 
+        $page = (int)($_REQUEST["page"] ?? 1) - 1;
+        $limit = 25;
+
+        $query .= " LIMIT ".($page * $limit).", ".$limit;
+
         $q = $db->query($query) or fail($db->error);
 
         $checks = [];
@@ -79,10 +159,14 @@ class ChecksController extends TemplatedController {
             ];
         }
 
+        $selfurl = twig_url_for(['ChecksController', 'index']);
+        $rows = $db->query("SELECT FOUND_ROWS() AS `count`")->fetch_assoc()["count"];
+
         return $this->renderTemplate("checks/index.html", [
             "checks" => $checks,
             "types" => $this->loadTypes($db),
-            "groups" => $this->loadGroups($db)
+            "groups" => $this->loadGroups($db),
+            "pagination" => pagination($rows, $limit, $page, $selfurl)
         ]);
     }
 

@@ -73,25 +73,7 @@
         <tfoot>
             <tr>
                 <td colspan="4">
-                    <nav aria-label="Paging" style="text-align: center">
-                        <ul class="pagination">
-                            {% if display_previous %}
-                            <li><a href="{{ previous_url }}" aria-label="Previous"><span aria-hidden="true">&laquo;</span></a></li>
-                            {% else %}
-                            <li class="disabled"><span><span aria-hidden="true">&laquo;</span></span></li>
-                            {% endif %}
-
-                            {% for page in pages %}
-                                <li{% if page.active %} class="active"{% elseif not page.url %} class="disabled"{% endif %}>{% if page.url %}<a href="{{ page.url }}">{{ page.num }}</a>{% else %}<span><span aria-hidden="true">{{ page.num }}</span></span>{% endif %}</li>
-                            {% endfor %}
-
-                            {% if display_next %}
-                            <li><a href="{{ next_url }}" aria-label="Next"><span aria-hidden="true">&raquo;</span></a></li>
-                            {% else %}
-                            <li class="disabled"><span><span aria-hidden="true">&raquo;</span></span></li>
-                            {% endif %}
-                        </ul>
-                    </nav>
+                    {% include "pagination.html" %}
                 </td>
             </tr>
         </tfoot>

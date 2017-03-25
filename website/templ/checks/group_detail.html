@@ -3,8 +3,9 @@
 <h1>{{ group.name }}</h1>
 
 <ol class="breadcrumb">
-    <li><a href="{{ url_for(['ChecksController', 'index']) }} ">Checks</a></li>
-    <li><a href="{{ url_for(['ChecksController', 'group_detail'], {'group_id': group.id}) }} ">{{ group.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'overview']) }} ">Checks</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'index']) }}?group={{ group.id }}">{{ group.name }}</a></li>
+    <li><a href="{{ url_for(['ChecksController', 'group_detail'], {'group_id': group.id}) }} ">Charts</a></li>
 </ol>
 
 <script>
