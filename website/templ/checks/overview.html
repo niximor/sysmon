@@ -15,8 +15,9 @@
         </div>
     </div>
 
-    <div class="col-xs-6">
+    <div class="col-xs-6 text-right">
         <div class="btn-group">
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': 'checks'}) }}" onclick="show_help('checks'); return false;" class="btn btn-default"><span class="fa fa-question-circle-o"></span> Help</a>
         </div>
     </div>
 </div>
