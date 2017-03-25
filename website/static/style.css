@@ -24,7 +24,8 @@ a.box:hover { color: initial; }
 .panel-tool-options .btn { margin-top: -14px; margin-bottom: -7px; }
 .panel-tool-options .dropdown-menu { top: 20px; }
 
-.td-punch { width: 3.5%; padding: 0.2em !important; vertical-align: middle !important; line-height: 0 !important; text-align: center; }
+.table-punchcard { min-width: 56em; table-layout: fixed; }
+.td-punch { padding: 0.2em !important; vertical-align: middle !important; line-height: 0 !important; text-align: center; }
 .tbody-th-punch { vertical-align: middle !important; }
 .td-punch circle { fill: #333; }
 .th-punch { text-align: center; }

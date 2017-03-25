@@ -17,37 +17,43 @@
     </div>
 </div>
 
-<table class="table table-compacted table-striped table-hover">
-    <thead>
-        <tr>
-            <th></th>
-{% for hour in hours %}
-            <th class="th-punch">{{ hour }}</th>
-{% endfor %}
-        </tr>
-    </thead>
-
-    <tbody>
-        {% for day in days %}
+<div class="table-responsive">
+    <table class="table table-compacted table-striped table-hover table-punchcard">
+        <thead>
             <tr>
-                <th class="tbody-th-punch">{{ day[1] }}</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
                 {% for hour in hours %}
-                    {% if max_punchcard > 0 %}
-                        {% set punches = punchcard[day[0]][hour] %}
-                        {% set percent = punches * 100 / max_punchcard %}
-                        <td class="td-punch"{% if punches > 0 %} title="{{ day[1] }} on {{ hour }} hour: {{ punches }} stamps" data-toggle="tooltip" data-placement="top" data-container='body'{% endif %}>
-                            <svg version="1.1" viewBox="0 0 200 200" preserveAspectRatio="xMinYMin meet">
-                                <circle cx="100" cy="100" r="{{ percent }}" />
-                            </svg>
-                        </td>
-                    {% else %}
-                        <td class="td-punch"></td>
-                    {% endif %}
+                    <th class="th-punch">{{ hour }}</th>
                 {% endfor %}
             </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </thead>
+
+        <tbody>
+            {% for day in days %}
+                <tr>
+                    <th class="tbody-th-punch" colspan="4">{{ day[1] }}</th>
+                    {% for hour in hours %}
+                        {% if max_punchcard > 0 %}
+                            {% set punches = punchcard[day[0]][hour] %}
+                            {% set percent = punches * 100 / max_punchcard %}
+                            <td class="td-punch"{% if punches > 0 %} title="{{ day[1] }} on {{ hour }} hour: {{ punches }} stamps" data-toggle="tooltip" data-placement="top" data-container='body'{% endif %}>
+                                <svg version="1.1" viewBox="0 0 200 200" preserveAspectRatio="xMinYMin meet">
+                                    <circle cx="100" cy="100" r="{{ percent }}" />
+                                </svg>
+                            </td>
+                        {% else %}
+                            <td class="td-punch"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <script>
 $(function () {
     $('[data-toggle="tooltip"]').tooltip();
