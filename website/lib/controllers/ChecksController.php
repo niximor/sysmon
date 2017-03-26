@@ -203,7 +203,7 @@ class ChecksController extends TemplatedController {
 
         return $this->renderTemplate("checks/detail.html", [
             "check" => $check,
-            "alerts" => Alert::loadLatest($db, NULL, $check["id"]),
+            "alerts" => Alert::loadLatest($db, ["check_id" => $check["id"]]),
             "chart" => $chart,
             "granularity" => $granularity,
             "charts" => $this->loadAllCharts($db, $check["type_id"])

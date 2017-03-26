@@ -6,6 +6,7 @@ class Alert {
     public $id;
     public $server_id;
     public $check_id;
+    public $stamp_id;
     public $timestamp;
     public $until;
     public $type;
@@ -16,6 +17,7 @@ class Alert {
     // Foreign properties
     public $hostname;
     public $check;
+    public $stamp;
 
     protected static $templates;
     protected static $twig_env;
@@ -25,6 +27,7 @@ class Alert {
             $this->id = $data["id"] ?? NULL;
             $this->server_id = $data["server_id"] ?? NULL;
             $this->check_id = $data["check_id"] ?? NULL;
+            $this->stamp_id = $data["stamp_id"] ?? NULL;
             $this->timestamp = (isset($data["timestamp"]))?DateTime::createFromFormat("Y-m-d G:i:s", $data["timestamp"]):NULL;
             $this->until = (isset($data["until"]))?DateTime::createFromFormat("Y-m-d G:i:s", $data["until"]):NULL;
             $this->type = $data["type"] ?? NULL;
@@ -35,6 +38,7 @@ class Alert {
             // Foreign properties
             $this->hostname = $data["hostname"] ?? NULL;
             $this->check = $data["check"] ?? NULL;
+            $this->stamp = $data["stamp"] ?? NULL;
         }
     }
 
@@ -58,37 +62,54 @@ class Alert {
         }
     }
 
-    public static function loadLatest(mysqli $db, $server_id=NULL, $check_id=NULL, $offset=0, $limit=25) {
-        $display = 25;
+    public static function loadLatest(mysqli $db, $options = NULL) {
+        if (is_null($options)) {
+            $options = [];
+        }
+
+        $options = array_merge([
+            "server_id" => NULL,
+            "check_id" => NULL,
+            "stamp_id" => NULL,
+            "offset" => 0,
+            "limit" => 25
+        ], $options);
 
         $where = [];
 
         $where[] = "(`a`.`active` = 1 OR `a`.`timestamp` >= DATE_ADD(NOW(), INTERVAL -7 DAY))";
 
-        if (!is_null($server_id)) {
-            $where[] = "`a`.`server_id` = ".escape($db, $server_id);
+        if (!is_null($options["server_id"])) {
+            $where[] = "`a`.`server_id` = ".escape($db, $options["server_id"]);
         }
 
-        if (!is_null($check_id)) {
-            $where[] = "`a`.`check_id` = ".escape($db, $check_id);
+        if (!is_null($options["check_id"])) {
+            $where[] = "`a`.`check_id` = ".escape($db, $options["check_id"]);
+        }
+
+        if (!is_null($options["stamp_id"])) {
+            $where[] = "`a`.`stamp_id` = ".escape($db, $options["stamp_id"]);
         }
 
         $query = "SELECT
             `s`.`hostname`,
             `a`.`server_id`,
             `a`.`check_id`,
+            `a`.`stamp_id`,
             `a`.`id`,
             `a`.`timestamp`,
             `a`.`type`,
             `a`.`data`,
             `a`.`active`,
             `a`.`until`,
-            `ch`.`name` AS `check`
+            `ch`.`name` AS `check`,
+            `st`.`stamp` AS `stamp`
             FROM `alerts` `a`
-            JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
+            LEFT JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
             LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
+            LEFT JOIN `stamps` `st` ON (`st`.`id` = `a`.`stamp_id`)
             WHERE ".implode(" AND ", $where)."
-            ORDER BY `id` DESC LIMIT ".$offset.", ".$limit;
+            ORDER BY `id` DESC LIMIT ".escape($db, $options["offset"]).", ".escape($db, $options["limit"]);
         $q_all = $db->query($query) or fail($db->error);
 
         $alerts = [];
@@ -110,18 +131,21 @@ class Alert {
         $q_active = $db->query("SELECT
             `s`.`hostname`,
             `s`.`id` AS `server_id`,
+            `a`.`stamp_id`,
             `a`.`id`,
             `a`.`timestamp`,
             `a`.`type`,
             `a`.`data`,
             `a`.`active`,
             `a`.`until`,
-            `ch`.`name` AS `check`
+            `ch`.`name` AS `check`,
+            `st`.`stamp` AS `stamp`
             FROM `alerts` `a`
-            JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
+            LEFT JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
             LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
+            LEFT JOIN `stamps` `st` ON (`st`.`id` = `a`.`stamp_id`)
             WHERE ".implode(" AND ", $where)."
-            ORDER BY `id` DESC LIMIT ".$offset.", ".$limit) or fail($db->error);
+            ORDER BY `id` DESC LIMIT ".escape($db, $options["offset"]).", ".escape($db, $options["limit"])) or fail($db->error);
 
         $max_to_remove = $q_active->num_rows;
         for ($i = count($alerts) - 1; $i >= 0; --$i) {

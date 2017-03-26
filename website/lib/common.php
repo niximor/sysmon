@@ -126,7 +126,13 @@ function parse_duration($duration) {
 }
 
 function escape(mysqli $db, $value) {
-    return ((is_null($value))?"NULL":"'".$db->real_escape_string($value)."'");
+    if (is_null($value)) {
+        return "NULL";
+    } else if (is_numeric($value)) {
+        return $value;
+    } else {
+        return "'".$db->real_escape_string($value)."'";
+    }
 }
 
 function send_alert(mysqli $db, int $server_id, string $type, $data, bool $active) {

@@ -78,4 +78,40 @@
         </form>
     </div>
 </div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Alerts</h3>
+    </div>
+    <div class="table-reponsive">
+        <table class="panel-body table table-striped table-hover table-condensed">
+            <thead>
+                <tr>
+                    <th>When</th>
+                    <th>Message</th>
+                    <th class="td-shrink"></th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for alert in alerts %}
+                    <tr class="{% if alert.active %}danger{% endif %}">
+                        <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d H:i:s") }}</td>
+                        <td>{{ alert.getMessage()|raw }}</td>
+                        <td class="td-shrink">
+                            {% if alert.active %}
+                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}?back={{ url_for(['ChecksController', 'detail'], {'id': check.id}) }}">Dismiss</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="3"><div class="well">Hooray, no alerts to show!</div></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {% endblock %}

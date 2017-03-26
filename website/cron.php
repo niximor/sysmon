@@ -38,16 +38,19 @@ try {
         `a`.`id`,
         `a`.`server_id`,
         `a`.`check_id`,
+        `a`.`stamp_id`,
         `a`.`timestamp`,
         `a`.`until`,
         `a`.`type`,
         `a`.`data`,
         `a`.`active`,
         `s`.`hostname`,
-        `ch`.`name` AS `check`
+        `ch`.`name` AS `check`,
+        `st`.`stamp` AS `stamp`
         FROM `alerts` `a`
-        JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
+        LEFT JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
         LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
+        LEFT JOIN `stamps` `st` ON (`st`.`id` = `a`.`stamp_id`)
         WHERE `sent` = 0");
 
     $first = true;
@@ -76,11 +79,24 @@ try {
             $type = "RECOVER";
         }
 
+
+        $msg_text = "[".$type."]\n";
+        if ($alert->stamp) {
+            $msg_text .= "Stamp: ".$alert->stamp."\n";
+        }
+
+        if ($alert->check) {
+            $msg_text .= "Check: ".$alert->check."\n";
+        }
+
+        if ($alert->hostname) {
+            $msg_text .= "Host: ".$alert->hostname."\n";
+        }
+
+        $msg_text .= "Alert: ".strip_tags($alert->getMessage());
+
         $msg = new Message();
-        $msg->setMessage(
-            "[".$type."]\n".
-            "Host: ".$alert->hostname."\n".
-            "Alert: ".strip_tags($alert->getMessage()));
+        $msg->setMessage($msg_text);
         $msg->setTo($config["xmpp-target"]);
 
         $client->send($msg);

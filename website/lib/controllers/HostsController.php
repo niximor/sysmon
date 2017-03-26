@@ -54,7 +54,7 @@ class HostsController extends TemplatedController implements CronInterface {
 
         return $this->renderTemplate("hosts/detail.html", [
             "host" => $host,
-            "alerts" => Alert::loadLatest($db, $id),
+            "alerts" => Alert::loadLatest($db, ["server_id" => $id]),
         ]);
     }
 

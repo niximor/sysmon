@@ -4,6 +4,7 @@ require_once "controllers/TemplatedController.php";
 require_once "controllers/CronInterface.php";
 
 require_once "models/Stamp.php";
+require_once "models/Alert.php";
 
 require_once "exceptions/EntityNotFound.php";
 
@@ -123,7 +124,8 @@ class StampsController extends TemplatedController implements CronInterface {
 
         return $this->renderTemplate("stamps/detail.html", [
             "stamp" => new Stamp($a),
-            "servers" => $this->listServers($db)
+            "servers" => $this->listServers($db),
+            "alerts" => Alert::loadLatest($db, ["stamp_id" => $a["id"]]),
         ]);
     }
 
