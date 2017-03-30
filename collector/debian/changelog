@@ -1,3 +1,15 @@
+gcm-sysmon-collector (2.1.2) xenial; urgency=medium
+
+  * Mikrotik RouterOS information retrieval.
+
+ -- Michal Kuchta <niximor@gmail.com>  Thu, 30 Mar 2017 13:56:39 +0200
+
+gcm-sysmon-collector (2.1.1) xenial; urgency=medium
+
+  * SNMP collector has timeout.
+
+ -- Michal Kuchta <niximor@gmail.com>  Thu, 30 Mar 2017 11:34:17 +0200
+
 gcm-sysmon-collector (2.1.0) xenial; urgency=medium
 
   * Support for SNMP devices querying.
