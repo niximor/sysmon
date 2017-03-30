@@ -7,7 +7,6 @@ import requests
 import json
 import socket
 import subprocess
-import time
 import traceback
 import os
 
@@ -86,7 +85,6 @@ class Check:
                 else:
                     check_log.error(line)
 
-
             return {
                 "id": check["id"],
                 "readings": readings,
@@ -128,7 +126,6 @@ def find_checks(dirs):
                     log.warning("Duplicate check binary: %s. Using %s for check %s." % (full_name, checks[name].binary, name))
 
     return checks
-
 
 
 def main():
@@ -177,8 +174,8 @@ def main():
             if r.status_code != 200:
                 logging.error(r.text)
     except Exception as e:
-        logging.error(str(e))
-        logging.debug(traceback.format_exc())
+        log.error(str(e))
+        log.debug(traceback.format_exc())
 
     log.info("SYSmon checker finished.")
 

@@ -102,7 +102,6 @@ def main():
         log.error(str(e))
         log.debug(traceback.format_exc())
 
-
     log.info("SYSmon collector finished.")
 
 if __name__ == "__main__":

@@ -1,2 +1,3 @@
 /usr/share/gcm-sysmon/bin/sysmon-collect.py /usr/bin/sysmon-collect.py
 /usr/share/gcm-sysmon/bin/sysmon-checker.py /usr/bin/sysmon-checker.py
+/usr/share/gcm-sysmon/bin/sysmon-snmp.py /usr/bin/sysmon-snmp.py

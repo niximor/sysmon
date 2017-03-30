@@ -1,12 +1,12 @@
 from ConfigParser import SafeConfigParser, NoSectionError, NoOptionError
 from argparse import ArgumentParser
-from sys import argv
 import os.path
 import __main__
 import logging
 from logging import StreamHandler
 from logging.handlers import WatchedFileHandler, SysLogHandler
 import sys
+
 
 class AppConfig:
     def __init__(self, options=None):
@@ -30,8 +30,8 @@ class AppConfig:
         if options is not None:
             for option_name, option_type, option_description in options:
                 if option_type == bool:
-                    parser.add_argument("--%s" % (option_name, ), action="store_true", help=option_description)
-                    parser.add_argument("--no-%s" % (option_name, ), action="store_false", help=option_description)
+                    parser.add_argument("--%s" % (option_name, ), action="store_const", const=True, dest=option_name, help=option_description)
+                    parser.add_argument("--no-%s" % (option_name, ), action="store_const", const=False, dest=option_name, help=option_description)
                 else:
                     parser.add_argument("--%s" % (option_name, ), type=option_type, help=option_description)
 
@@ -54,14 +54,14 @@ class AppConfig:
                 except NoSectionError as e:
                     try:
                         val = config.get("DEFAULT", option_name)
-                        self.options[option_name] = self._convert_type(val)
+                        self.options[option_name] = self._convert_type(val, option_type)
                     except NoOptionError as e:
                         pass
                     except NoSectionError as e:
                         pass
 
         for key, val in vars(args).iteritems():
-            if val is not None and key not in self.options:
+            if val is not None:
                 self.options[key] = val
 
         self.setup_logging()

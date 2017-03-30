@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.1.0) xenial; urgency=medium
+
+  * Support for SNMP devices querying.
+
+ -- Michal Kuchta <niximor@gmail.com>  Thu, 30 Mar 2017 09:52:54 +0200
+
 gcm-sysmon-collector (2.0.6) xenial; urgency=medium
 
   * if_traffic check.
