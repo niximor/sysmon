@@ -306,7 +306,7 @@ class StampsController extends TemplatedController implements CronInterface {
     }
 
     protected function listServers(mysqli $db) {
-        $q = $db->query("SELECT `id`, `hostname` FROM `servers` ORDER BY `hostname` ASC") or fail($db->error);
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `virtual` = 0 ORDER BY `hostname` ASC") or fail($db->error);
         $servers = [];
         while ($a = $q->fetch_array()) {
             $servers[] = [

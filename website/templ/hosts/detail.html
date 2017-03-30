@@ -8,9 +8,18 @@
 </ol>
 
 <div class="btn-group" role="group">
+    {% if not host.virtual %}
     <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-dropbox"></span> Packages</a>
+    {% else %}
+    <a href="{{ url_for(['HostsController', 'edit'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+    <a href="{{ url_for(['HostsController', 'remove'], {'id': host.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this device?');"><span class="fa fa-remove"></span> Remove</a>
+</div>
+<div class="btn-group" role="group">
+    {% endif %}
     <a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-history"></span> Changelog</a>
+    {% if not host.virtual %}
     <a href="{{ url_for(['StampsController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-heartbeat"></span> Stamps</a>
+    {% endif %}
     <a href="{{ url_for(['ChecksController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-hand-o-right"></span> Checks</a>
     <a href="{{ url_for(['HostsController', 'charts'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
 </div>
@@ -25,16 +34,16 @@
             <dd>{{ host.hostname }}</dd>
 
             <dt>Distribution:</dt>
-            <dd>{{ host.distribution }}</dd>
+            <dd>{{ host.distribution|default("N/A") }}</dd>
 
             <dt>Version:</dt>
-            <dd>{{ host.version }}</dd>
+            <dd>{{ host.version|default("N/A") }}</dd>
 
             <dt>Kernel:</dt>
-            <dd>{{ host.kernel }}</dd>
+            <dd>{{ host.kernel|default("N/A") }}</dd>
 
             <dt>IP:</dt>
-            <dd>{{ host.ip }} ({{ host.resolved_hostname }})</dd>
+            <dd>{% if host.ip %}{{ host.ip }} ({{ host.resolved_hostname }}){% else %}N/A{% endif %}</dd>
 
             <dt>Last seen:</dt>
             <dd>{{ host.last_seen|datetime("Y-m-d G:i:s") }}</dd>

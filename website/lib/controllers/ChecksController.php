@@ -1258,7 +1258,7 @@ class ChecksController extends TemplatedController {
 
     protected function loadServers(mysqli $db) {
         $servers = [];
-        $q = $db->query("SELECT `id`, `hostname` FROM `servers` ORDER BY `hostname` ASC");
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `virtual` = 0 ORDER BY `hostname` ASC");
         while ($a = $q->fetch_array()) {
             $servers[] = [
                 "id" => $a["id"],

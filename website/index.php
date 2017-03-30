@@ -25,14 +25,20 @@ require_once "controllers/ChecksController.php";
 $router->bind("/checks/list/<hostname>", array("ChecksController", "list"));
 $router->bind("/checks/put", array("ChecksController", "put"));
 
+require_once "controllers/HostsController.php";
+$router->bind("/hosts/list/<hostname>", array("HostsController", "list"));
+
 // Website
 if (Session::get("user_id")) {
     require_once "controllers/OverviewController.php";
     $router->bind("/", array("OverviewController", "index"));
     $router->bind("/alerts/dismiss/<id>", array("OverviewController", "dismiss"));
 
-    require_once "controllers/HostsController.php";
     $router->bind("/hosts", array("HostsController", "index"));
+    $router->bind("/hosts/add", array("HostsController", "add"));
+    $router->bind("/hosts/list/<hostname>", array("HostsController", "list"));
+    $router->bind("/hosts/<id>/edit", array("HostsController", "edit"));
+    $router->bind("/hosts/<id>/remove", array("HostsController", "remove"));
     $router->bind("/hosts/<id>/detail", array("HostsController", "detail"));
     $router->bind("/hosts/<id>/history", array("HostsController", "history"));
     $router->bind("/hosts/<id>/charts", array("HostsController", "charts"));
@@ -94,6 +100,11 @@ if (Session::get("user_id")) {
 } else {
     require_once "controllers/LoginController.php";
     $router->bind("/", array("LoginController", "index"));
+
+    require_once "controllers/HelpController.php";
+    $router->bind("/help/", array("HelpController", "index"));
+    $router->bind("/help/get/<topic>", array("HelpController", "get"));
+    $router->bind("/help/<topic>", array("HelpController", "topic"));
 }
 
 function twig_url_for(...$args) {

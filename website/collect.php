@@ -12,15 +12,29 @@ function get_ip() {
     }
 }
 
-function update_server(mysqli $db, string $hostname, string $distribution, string $version, string $kernel, $uptime) {
+function update_server(mysqli $db, int $id = NULL, string $hostname, string $distribution = NULL, string $version = NULL, string $kernel = NULL, int $uptime = NULL, string $ip = NULL) {
+	$db_id = escape($db, $id);
 	$hostname = escape($db, $hostname);
-	$distribution = escape($db, $distribution);
-	$version = escape($db, $version);
-    $kernel = escape($db, $kernel);
-    $ip = escape($db, get_ip());
+	$distribution = escape($db, $distribution ?? "");
+	$version = escape($db, $version ?? "");
+    $kernel = escape($db, $kernel ?? "");
+    if (is_null($ip)) {
+    	$ip = escape($db, get_ip());
+    } else {
+    	$ip = escape($db, $ip);
+    }
+
     $db_uptime = escape($db, $uptime);
 
-	$q = $db->query("SELECT `id`, `distribution`, `version`, `kernel`, `ip`, `uptime` FROM `servers` WHERE `hostname` = ".$hostname) or fail($db->error);
+    $where = [];
+
+    if (!is_null($id)) {
+    	$where[] = "`id` = ".$db_id;
+    } else {
+    	$where[] = "`hostname` = ".$hostname;
+    }
+
+	$q = $db->query("SELECT `id`, `distribution`, `version`, `kernel`, `ip`, `uptime` FROM `servers` WHERE ".implode(" AND ", $where)) or fail($db->error);
 	if ($a = $q->fetch_array()) {
 		if (is_null($db_uptime)) {
 			$db_uptime = "`uptime`";
@@ -52,7 +66,7 @@ function update_server(mysqli $db, string $hostname, string $distribution, strin
 		}
 
 		return $a["id"];
-	} else {
+	} elseif (is_null($id)) {
 		$db->query("INSERT INTO `servers` (`hostname`, `distribution`, `version`, `kernel`, `last_check`, `uptime`) VALUES (".$hostname.", ".$distribution.", ".$version.", ".$kernel.", NOW(), ".$ip.", ".$db_uptime.")") or fail($db->error);
 		return $db->insert_id;
 	}
@@ -142,7 +156,15 @@ try {
 		throw new RuntimeException("Insufficient data. Missing hostname.");
 	}
 
-	$server_id = update_server($db, $data->hostname, $data->distribution, $data->version, $data->kernel, $data->uptime ?? NULL);
+	$server_id = update_server($db,
+		$data->id ?? NULL,
+		$data->hostname,
+		$data->distribution ?? NULL,
+		$data->version ?? NULL,
+		$data->kernel ?? NULL,
+		$data->uptime ?? NULL,
+		$data->ip ?? NULL);
+
 	update_packages($db, $server_id, $data->packages);
 
 	$db->commit();

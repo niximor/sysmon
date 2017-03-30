@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h1><span class="fa fa-hdd-o"></span> Add device</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['HostsController', 'index']) }}">Hosts</a></li>
+    <li><a href="{{ url_for(['HostsController', 'add']) }}">Add device</a></li>
+</ol>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">Add device</h3>
+    </div>
+
+    <div class="panel-body">
+        <form action="{{ url_for(['HostsController', 'add']) }}" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputAgent">Agent:</label>
+                <div class="col-sm-10">
+                    <select name="agent" id="inputAgent" class="form-control">
+                        {% for server in servers %}
+                            <option value="{{ server.id }}">{{ server.hostname }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Select host that should be used to query the SNMP device.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputHostname">Address:</label>
+                <div class="col-sm-10">
+                    <input type="text" name="hostname" id="inputHostname" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Enter the hostname or IP address of the SNMP device you want to monitor.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputPort">Port:</label>
+                <div class="col-sm-2">
+                    <input type="text" name="port" id="inputPort" class="form-control" value="161" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Enter the port of SNMP service on the device. Default SNMP port is <code>161</code>.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputVersion">Version:</label>
+                <div class="col-sm-2">
+                    <select name="version" id="formVersion" id="inputVersion" class="form-control">
+                        <option value="1">1</option>
+                        <option value="2c">2c</option>
+                    </select>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Enter SNMP version that should be used when polling the device.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputCommunity">Community:</label>
+                <div class="col-sm-10">
+                    <input type="text" name="community" id="inputCommunity" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">
+                        Enter the SNMP community with read permission to the SNMP device.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="inputPollInterval">Poll interval:</label>
+                <div class="col-sm-2">
+                    <input type="text" name="poll_interval" id="inputPollInterval" class="form-control" value="1m" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Insert interval how often the server should be polled. You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" value="Add" class="btn btn-primary" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

@@ -43,7 +43,7 @@ class HostsController extends TemplatedController implements CronInterface {
     public function detail($id) {
         $db = connect();
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`hostname`, `s`.`distribution`, `s`.`version`, `s`.`kernel`, `s`.`ip`, `s`.`last_check`, `s`.`uptime` FROM `servers` `s`  WHERE `id` = '".$db->real_escape_string($id)."'") or fail($db->error);
+        $q = $db->query("SELECT `s`.`id`, `s`.`hostname`, `s`.`distribution`, `s`.`version`, `s`.`kernel`, `s`.`ip`, `s`.`last_check`, `s`.`uptime`, `s`.`virtual` FROM `servers` `s`  WHERE `id` = '".$db->real_escape_string($id)."'") or fail($db->error);
         $host = $q->fetch_array();
 
         if (!$host) {
@@ -130,7 +130,7 @@ class HostsController extends TemplatedController implements CronInterface {
         $server = $q->fetch_array();
 
         if (!$server) {
-            throw new EntityNotFoun("Host does not exists.");
+            throw new EntityNotFound("Host does not exists.");
         }
 
         $q = $db->query("SELECT
@@ -165,10 +165,158 @@ class HostsController extends TemplatedController implements CronInterface {
         ]);
     }
 
+    public function add() {
+        $db = connect();
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $db->query("INSERT INTO `servers` (`hostname`, `last_check`, `distribution`, `version`, `kernel`, `ip`, `virtual`) VALUES (
+                    ".escape($db, $_REQUEST["hostname"]).",
+                    NOW(),
+                    '',
+                    '',
+                    '',
+                    ".escape($db, gethostbyname($_REQUEST["hostname"])).",
+                    1
+                )") or fail($db->error);
+            $server_id = $db->insert_id;
+
+            $poll_interval = parse_duration($_REQUEST["poll_interval"]);
+
+            $db->query("INSERT INTO `snmp_devices` (`server_id`, `agent_id`, `hostname`, `port`, `version`, `community`, `poll_interval`) VALUES (
+                    ".escape($db, $server_id).",
+                    ".escape($db, $_REQUEST["agent"]).",
+                    ".escape($db, $_REQUEST["hostname"]).",
+                    ".escape($db, $_REQUEST["port"]).",
+                    ".escape($db, $_REQUEST["version"]).",
+                    ".escape($db, $_REQUEST["community"]).",
+                    ".escape($db, $poll_interval)."
+                )") or fail($db->error);
+
+            $db->commit();
+
+            Message::create(Message::SUCCESS, "Device has been successfully created.");
+            header("Location: ".twig_url_for(['HostsController', 'index']));
+            exit;
+        }
+
+        return $this->renderTemplate("hosts/add.html", [
+            "servers" => $this->loadServers($db)
+        ]);
+    }
+
+    public function edit($id) {
+        $db = connect();
+
+        $q = $db->query("SELECT
+                `d`.`server_id`,
+                `d`.`agent_id`,
+                `d`.`hostname`,
+                `d`.`port`,
+                `d`.`version`,
+                `d`.`community`,
+                `d`.`poll_interval`,
+                `s`.`hostname` AS `server_hostname`
+            FROM `snmp_devices` `d`
+            JOIN `servers` `s` ON (`d`.`server_id` = `s`.`id`)
+            WHERE `d`.`server_id` = ".escape($db, $id)) or fail($db->error);
+
+        $device = $q->fetch_assoc();
+
+        if (!$device) {
+            throw new EntityNotFound("Device does not exists.");
+        }
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $poll_interval = parse_duration($_REQUEST["poll_interval"]);
+
+            $db->query("UPDATE `snmp_devices`
+                SET
+                    `agent_id` = ".escape($db, $_REQUEST["agent"]).",
+                    `hostname` = ".escape($db, $_REQUEST["hostname"]).",
+                    `port` = ".escape($db, $_REQUEST["port"]).",
+                    `version` = ".escape($db, $_REQUEST["version"]).",
+                    `community` = ".escape($db, $_REQUEST["community"]).",
+                    `poll_interval` = ".escape($db, $poll_interval)."
+                WHERE `server_id` = ".escape($db, $device["id"])) or fail($db->error);
+
+            $db->commit();
+
+            Message::create(Message::SUCCESS, "Device has been modified.");
+            header("Location: ".twig_url_for(['HostsController', 'detail'], ["id" => $device["server_id"]]));
+            exit;
+        }
+
+        return $this->renderTemplate("hosts/edit.html", [
+            "device" => $device,
+            "servers" => $this->loadServers($db)
+        ]);
+    }
+
+    public function remove($id) {
+        $db = connect();
+
+        $db->query("DELETE FROM `servers` WHERE `id` = ".escape($db, $id)." AND `virtual` = 1") or fail($db->error);
+
+        if ($db->affected_rows == 0) {
+            throw new EntityNotFound("Device does not exists.");
+        }
+
+        $db->commit();
+
+        Message::create(Message::SUCCESS, "Device has been removed.");
+
+        header("Location: ".twig_url_for(["HostsController", "index"]));
+        exit;
+    }
+
+    public function list($hostname) {
+        // List devices that should be queried over SNMP from specific agent.
+        $db = connect();
+
+        $q = $db->query("SELECT `id` FROM `servers` `s` WHERE `s`.`hostname` = ".escape($db, $hostname)." AND `s`.`virtual` = 0");
+        $a = $q->fetch_assoc();
+
+        if (!$a) {
+            throw new EntityNotFound("Host was not found.");
+        }
+
+        $q = $db->query("SELECT `d`.`server_id`, `d`.`hostname`, `d`.`port`, `d`.`version`, `d`.`community`
+            FROM `snmp_devices` `d`
+            JOIN `servers` `s` ON (`s`.`id` = `d`.`server_id`)
+            WHERE `d`.`agent_id` = ".escape($db, $a["id"])." AND DATE_ADD(`s`.`last_check`, INTERVAL `d`.`poll_interval` - 60 SECOND) < NOW()");
+
+        $devices = [];
+
+        while ($a = $q->fetch_assoc()) {
+            $devices[] = [
+                "id" => $a["server_id"],
+                "hostname" => $a["hostname"],
+                "port" => $a["port"],
+                "version" => $a["version"],
+                "community" => $a["community"]
+            ];
+        }
+
+        return json_encode($devices);
+    }
+
+    protected function loadServers(mysqli $db) {
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `virtual` = 0 ORDER BY `hostname` ASC");
+
+        $servers = [];
+        while ($server = $q->fetch_assoc()) {
+            $servers[] = $server;
+        }
+
+        return $servers;
+    }
+
     public function cron(mysqli $db) {
         $db = connect();
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`last_check` FROM `servers` `s` WHERE `last_check` < DATE_ADD(NOW(), INTERVAL -5 MINUTE)") or fail($db->error);
+        // For SNMP devices, the dead interval is 3*poll interval.
+        // For physical devices, it is 300 seconds (5 minutes).
+        $q = $db->query("SELECT `s`.`id`, `s`.`last_check` FROM `servers` `s` LEFT JOIN `snmp_devices` `d` ON (`d`.`server_id` = `s`.`id`) WHERE `s`.`last_check` < DATE_ADD(NOW(), INTERVAL -3*COALESCE(`d`.`poll_interval`, 100) SECOND)") or fail($db->error);
 
         $dead_hosts = [];
 
