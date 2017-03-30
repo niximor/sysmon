@@ -57,9 +57,9 @@
             <div class="form-group">
                 <label class="col-sm-2 control-label" for="inputVersion">Version:</label>
                 <div class="col-sm-2">
-                    <select name="version" id="formVersion" id="inputVersion" class="form-control" value="{{ device.version }}">
-                        <option value="1">1</option>
-                        <option value="2c">2c</option>
+                    <select name="version" id="formVersion" id="inputVersion" class="form-control">
+                        <option value="1"{% if device.version == "1" %} selected{% endif %}>1</option>
+                        <option value="2c"{% if device.version == "2c" %} selected{% endif %}>2c</option>
                     </select>
                 </div>
                 <div class="col-sm-10 col-sm-offset-2">

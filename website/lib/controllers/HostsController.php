@@ -237,7 +237,7 @@ class HostsController extends TemplatedController implements CronInterface {
                     `version` = ".escape($db, $_REQUEST["version"]).",
                     `community` = ".escape($db, $_REQUEST["community"]).",
                     `poll_interval` = ".escape($db, $poll_interval)."
-                WHERE `server_id` = ".escape($db, $device["id"])) or fail($db->error);
+                WHERE `server_id` = ".escape($db, $device["server_id"])) or fail($db->error);
 
             $db->commit();
 
