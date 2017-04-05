@@ -175,10 +175,14 @@ class StampsController extends TemplatedController implements CronInterface {
         $dow_from = escape($db, date("N", $from));
         $hour_from = escape($db, date("G", $from));
 
+        $from = $year_from * 1000000 + $week_from * 10000 + $dow_from * 100 + $hour_from + 1;
+
         $year_to = escape($db, date("Y", $to));
         $week_to = escape($db, date("W", $to));
         $dow_to = escape($db, date("N", $to));
         $hour_to = escape($db, date("G", $to));
+
+        $to = $year_to * 1000000 + $week_to * 10000 + $dow_to * 100 + $hour_to;
 
         $query = "SELECT
                 SUM(`count`) AS `count`,
@@ -187,31 +191,7 @@ class StampsController extends TemplatedController implements CronInterface {
                 FROM `stamp_punchcard`
                 WHERE
                     `stamp_id` = ".escape($db, $stamp["id"])."
-                    AND (
-                        (
-                            `year` = ".$year_from."
-                            AND `week` >= ".$week_from."
-                            AND (
-                                `day_of_week` > ".$dow_from."
-                                OR (
-                                    `day_of_week` = ".$dow_from."
-                                    AND `hour` > ".$hour_from."
-                                )
-                            )
-                        )
-                        OR (
-                            `year` = ".$year_to."
-                            AND `week` <= ".$week_to."
-                            AND (
-                                `day_of_week` < ".$dow_to."
-                                OR (
-                                    `day_of_week` = ".$dow_to."
-                                    AND `hour` <= ".$hour_to."
-                                )
-                            )
-                        )
-                        OR (`year` > ".$year_from." AND `year` < ".$year_to.")
-                    )
+                    AND `year` * 1000000 + `week` * 10000 + `day_of_week` * 100 + `hour` BETWEEN ".$from." AND ".$to."
                 GROUP BY `day_of_week`, `hour`";
         $q = $db->query($query) or fail($db->error);
 
