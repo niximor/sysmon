@@ -53,3 +53,7 @@ class TestBoolConversion(TestCase):
     def test_fail_gibrish(self):
         with self.assertRaises(ValueError):
             self.assertFalse(AppConfig._get_bool("gibrish"))
+
+
+if __name__ == "__main__":
+    main()

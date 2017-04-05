@@ -1154,17 +1154,59 @@ class ChecksController extends TemplatedController {
     public function list($hostname) {
         $db = connect();
 
-        $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `t`.`identifier` AS `type`, `ch`.`params` FROM `checks` `ch` JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`) JOIN `check_types` `t` ON (`t`.`id` = `ch`.`type_id`) WHERE `s`.`hostname` = ".escape($db, $hostname)." AND `ch`.`enabled` = 1 AND (`ch`.`last_check` IS NULL OR DATE_ADD(`ch`.`last_check`, INTERVAL (`interval` - 60) SECOND) <= NOW())");
+        $q = $db->query("SELECT `id` FROM `servers` `s` WHERE `s`.`hostname` = ".escape($db, $hostname)) or fail($db->error);
+        $server = $q->fetch_assoc();
+
+        if (!$server) {
+            header("Content-Type: text/json");
+            return json_encode([]);
+        }
+
+        $server_ids = [escape($db, $server["id"])];
+
+        $q = $db->query("SELECT `server_id` FROM `snmp_devices` WHERE `agent_id` = ".escape($db, $server["id"])) or fail($db->error);
+        while ($a = $q->fetch_assoc()) {
+            $server_ids[] = escape($db, $a["server_id"]);
+        }
+
+        $q = $db->query("SELECT
+                `ch`.`id`,
+                `ch`.`name`,
+                `t`.`identifier` AS `type`,
+                `ch`.`params`,
+                `d`.`hostname` AS `snmp_hostname`,
+                `d`.`port` AS `snmp_port`,
+                `d`.`version` AS `snmp_version`,
+                `d`.`community` AS `snmp_community`
+            FROM `checks` `ch`
+            JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
+            LEFT JOIN `snmp_devices` `d` ON (`d`.`server_id` = `s`.`id`)
+            JOIN `check_types` `t` ON (`t`.`id` = `ch`.`type_id`)
+            WHERE `s`.`id` IN (".implode(",", $server_ids).")
+                AND `ch`.`enabled` = 1
+                AND (`ch`.`last_check` IS NULL OR DATE_ADD(`ch`.`last_check`, INTERVAL (`interval` - 60) SECOND) <= NOW())
+            ") or fail($db->error);
 
         $out = array();
 
-        while ($a = $q->fetch_array()) {
-            $out[] = [
+        while ($a = $q->fetch_assoc()) {
+            $check = [
                 "id" => $a["id"],
                 "name" => $a["name"],
                 "type" => $a["type"],
                 "params" => json_decode($a["params"]),
             ];
+
+            if (!is_null($a["snmp_hostname"])) {
+                $check["snmp"] = [
+                    "hostname" => $a["snmp_hostname"],
+                    "port" => $a["snmp_port"],
+                    "version" => $a["snmp_version"],
+                    "community" => $a["snmp_community"]
+                ];
+            }
+
+            $out[] = $check;
         }
 
         header("Content-Type: text/json");
@@ -1258,7 +1300,7 @@ class ChecksController extends TemplatedController {
 
     protected function loadServers(mysqli $db) {
         $servers = [];
-        $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `virtual` = 0 ORDER BY `hostname` ASC");
+        $q = $db->query("SELECT `id`, `hostname` FROM `servers` ORDER BY `hostname` ASC");
         while ($a = $q->fetch_array()) {
             $servers[] = [
                 "id" => $a["id"],

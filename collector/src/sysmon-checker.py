@@ -39,7 +39,18 @@ class Check:
             }
             new_env.update(check["params"])
 
-            logging.info("Checking %s." % (check.get("name"), ))
+            if "snmp" in check:
+                snmp = check.get("snmp", {})
+                logging.info("Checking %s on %s." % (check.get("name"), snmp.get("hostname")))
+
+                new_env["USE_SNMP"] = "1"
+                new_env["SNMP_HOSTNAME"] = snmp.get("hostname")
+                new_env["SNMP_PORT"] = snmp.get("port")
+                new_env["SNMP_VERSION"] = snmp.get("version")
+                new_env["SNMP_COMMUNITY"] = snmp.get("community")
+            else:
+                logging.info("Checking %s." % (check.get("name"), ))
+
             p = subprocess.Popen([self.binary], env=new_env, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             out, err = p.communicate()
 

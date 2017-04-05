@@ -1,3 +1,5 @@
 usr/share/gcm-sysmon/bin
+usr/share/gcm-sysmon/bin/pyasn1
+usr/share/gcm-sysmon/bin/lib
 etc/gcm-sysmon
 usr/share/gcm-sysmon/checks/lib

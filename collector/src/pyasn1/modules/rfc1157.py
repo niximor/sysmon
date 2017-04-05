@@ -13,7 +13,7 @@
 # http://wiki.wireshark.org/SampleCaptures/
 #
 from pyasn1.type import univ, namedtype, namedval, tag
-from pyasn1.modules import rfc1155
+from pyasn1.modules import rfc1155, rfc1902
 
 
 class Version(univ.Integer):
@@ -49,7 +49,7 @@ class ErrorIndex(univ.Integer):
 class VarBind(univ.Sequence):
     componentType = namedtype.NamedTypes(
         namedtype.NamedType('name', rfc1155.ObjectName()),
-        namedtype.NamedType('value', rfc1155.ObjectSyntax())
+        namedtype.NamedType('value', rfc1902.ObjectSyntax())
     )
 
 
