@@ -52,7 +52,7 @@ class SNMP:
             var["name"] = oid
             var["value"] = var["value"]
             var["value"]["simple"] = var["value"]["simple"]
-            var["value"]["simple"]["string-value"] = ""
+            var["value"]["simple"]["empty-value"] = None
 
             get_request["variable-bindings"].append(var)
 

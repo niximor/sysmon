@@ -96,6 +96,7 @@ class SimpleSyntax(univ.Choice):
         namedtype.NamedType('integer-value', Integer()),
         namedtype.NamedType('string-value', OctetString()),
         namedtype.NamedType('objectID-value', univ.ObjectIdentifier()),
+        namedtype.NamedType('empty-value', univ.Null())
         )
 
 
