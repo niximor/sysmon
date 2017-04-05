@@ -67,7 +67,7 @@ class Check:
                 if not line:
                     continue
 
-                reading = line.split("=", 2)
+                reading = line.split("=", 1)
                 if (len(reading) != 2):
                     check_log.info(line)
                 else:
@@ -81,12 +81,12 @@ class Check:
                     continue
 
                 if line.startswith("ALERT:"):
-                    alert = line.split(":", 3)
+                    alert = line.split(":", 2)
                     if len(alert) > 1:
                         try:
                             alerts.append({
-                                "type": alert[2],
-                                "data": json.loads(alert[3]) if len(alert) > 2 else {}
+                                "type": alert[1],
+                                "data": json.loads(alert[2]) if len(alert) > 2 else {}
                             })
                         except ValueError as e:
                             check_log.error("Invalid JSON alert data: %s" % (str(e), ))
