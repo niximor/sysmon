@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.2.0) xenial; urgency=medium
+
+  * SNMP checks supported.
+
+ -- Michal Kuchta <niximor@gmail.com>  Wed, 05 Apr 2017 10:41:10 +0200
+
 gcm-sysmon-collector (2.1.2) xenial; urgency=medium
 
   * Mikrotik RouterOS information retrieval.
