@@ -8,7 +8,9 @@
 </ol>
 
 <div class="btn-group">
-    <a href="{{ url_for(['CheckTypesController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% if current_user.hasAction('check_types_write') %}
+        <a href="{{ url_for(['CheckTypesController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% endif %}
 </div>
 
 <table class="table table-compacted table-striped table-hover">
@@ -28,8 +30,10 @@
                 <td>{{ check.identifier }}</td>
                 <td>{{ check.usage }}</td>
                 <td class="text-nowrap">
-                    <a href="{{ url_for(['CheckTypesController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
-                    <a href="{{ url_for(['CheckTypesController', 'remove'], {'id': check.id}) }}" onclick="return confirm('Do you really want to remove this check type? It will also delete all checks of this type, and also all chart history for the check.');" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                    {% if current_user.hasAction('check_types_write') %}
+                        <a href="{{ url_for(['CheckTypesController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                        <a href="{{ url_for(['CheckTypesController', 'remove'], {'id': check.id}) }}" onclick="return confirm('Do you really want to remove this check type? It will also delete all checks of this type, and also all chart history for the check.');" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                    {% endif %}
                 </td>
             </tr>
         {% endfor %}

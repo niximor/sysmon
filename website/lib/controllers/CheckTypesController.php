@@ -8,6 +8,8 @@ require_once "models/Message.php";
 
 class CheckTypesController extends TemplatedController {
     public function index() {
+        $this->requireAction("check_types_read");
+
         $db = connect();
 
         $order = "name";
@@ -49,6 +51,8 @@ class CheckTypesController extends TemplatedController {
     }
 
     public function add() {
+        $this->requireAction("check_types_write");
+
         $db = connect();
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -72,6 +76,8 @@ class CheckTypesController extends TemplatedController {
     }
 
     public function edit($id) {
+        $this->requireAction("check_types_write");
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `name`, `identifier` FROM `check_types`
@@ -132,6 +138,8 @@ class CheckTypesController extends TemplatedController {
     }
 
     public function remove($id) {
+        $this->requireAction("check_types_write");
+
         $db = connect();
 
         $db->query("DELETE FROM `check_types` WHERE `id` = ".escape($db, $id));
