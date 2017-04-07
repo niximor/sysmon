@@ -110,9 +110,11 @@ class ActionsController extends TemplatedController {
         while ($a = $q->fetch_assoc()) {
             $a["childs"] = [];
             $actions[$a["id"]] = $a;
+        }
 
+        foreach ($actions as $a) {
             if (!is_null($a["parent_id"])) {
-                $actions[$a["parent_id"]]["childs"][] = $a;
+                $actions[$a["parent_id"]]["childs"][] = &$actions[$a["id"]];
             }
         }
 

@@ -51,7 +51,9 @@ class RolesController extends TemplatedController {
             $a["childs"] = [];
             $a["selected"] = false;
             $actions[$a["id"]] = $a;
+        }
 
+        foreach ($actions as $a) {
             if (!is_null($a["parent_id"])) {
                 $actions[$a["parent_id"]]["childs"][] = $a;
             }
@@ -126,7 +128,9 @@ class RolesController extends TemplatedController {
             $a["childs"] = [];
             $a["selected"] = (bool)$a["selected"];
             $actions[(int)$a["id"]] = $a;
+        }
 
+        foreach ($actions as $a) {
             if (!is_null($a["parent_id"])) {
                 $actions[(int)$a["parent_id"]]["childs"][] = &$actions[(int)$a["id"]];
 
@@ -174,7 +178,9 @@ class RolesController extends TemplatedController {
             $a["selected"] = false;
             $a["touched"] = false;
             $actions[$a["id"]] = $a;
+        }
 
+        foreach ($actions as $a) {
             if (!is_null($a["parent_id"])) {
                 $actions[$a["parent_id"]]["childs"][] = &$actions[$a["id"]];
             }

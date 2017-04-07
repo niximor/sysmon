@@ -37,8 +37,7 @@ class CurrentUser {
                     IF(MAX(`ur`.`user_id`) IS NOT NULL, 1, 0) AS `selected`
                 FROM `actions` `a`
                 LEFT JOIN `role_actions` `ra` ON (`ra`.`action_id` = `a`.`id`)
-                LEFT JOIN `user_roles` `ur` ON (`ra`.`role_id` = `ur`.`role_id`)
-                WHERE `ur`.`user_id` = ".escape($db, $this->id)."
+                LEFT JOIN `user_roles` `ur` ON (`ra`.`role_id` = `ur`.`role_id` AND `ur`.`user_id` = ".escape($db, $this->id).")
                 GROUP BY `a`.`id`
                 ORDER BY `a`.`parent_id` ASC");
 
@@ -46,7 +45,9 @@ class CurrentUser {
             while ($a = $q->fetch_assoc()) {
                 $a["selected"] = (bool)$a["selected"];
                 $actions[$a["id"]] = $a;
+            }
 
+            foreach ($actions as $a) {
                 if ($a["selected"]) {
                     $parent = $a["parent_id"];
                     while (!is_null($parent)) {

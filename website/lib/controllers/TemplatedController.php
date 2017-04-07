@@ -12,17 +12,7 @@ require_once "exceptions/AccessDenied.php";
 class TemplatedController extends TwigEnv implements \nixfw\fastrouter\Controller {
     protected function renderTemplate($name, $context = []) {
         $template = $this->twig->load($name);
-        return $template->render(array_merge(
-            $context, [
-                "controller" => get_class($this),
-                "request" => $_REQUEST,
-                "get" => $_GET,
-                "post" => $_POST,
-                "total_alerts_count" => $this->countAlerts(),
-                "messages" => Message::get(),
-                "current_user" => CurrentUser::i()
-            ]
-        ));
+        return $template->render($context);
     }
 
     public function countAlerts() {

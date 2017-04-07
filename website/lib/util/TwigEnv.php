@@ -13,6 +13,14 @@ class TwigEnv {
         $this->twig->addFilter(new Twig_Filter("sorted", array($this, "twig_sorted"), ["is_safe" => ["html"]]));
 
         $this->twig->addFunction(new Twig_Function("url_for", "twig_url_for"));
+
+        $this->twig->addGlobal("current_user", CurrentUser::i());
+        $this->twig->addGlobal("controller", get_class($this));
+        $this->twig->addGlobal("request", $_REQUEST);
+        $this->twig->addGlobal("get", $_GET);
+        $this->twig->addGlobal("post", $_POST);
+        $this->twig->addGlobal("total_alerts_count", $this->countAlerts());
+        $this->twig->addGlobal("messages", Message::get());
     }
 
     public static function twig_filter_datetime($datetime, $format=NULL) {
