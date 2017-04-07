@@ -8,6 +8,8 @@ require_once "exceptions/EntityNotFound.php";
 
 class AlertTemplatesController extends TemplatedController {
     public function index() {
+        $this->requireAction("alert_templates_read");
+
         $db = connect();
 
         $order = "alert_type";
@@ -37,6 +39,8 @@ class AlertTemplatesController extends TemplatedController {
     }
 
     public function add() {
+        $this->requireAction("alert_templates_write");
+
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $db = connect();
             $db->query("INSERT INTO `alert_templates` (`alert_type`, `template`) VALUES (".escape($db, $_POST["alert_type"]).", ".escape($db, $_POST["template"]).")") or fail($db->error);
@@ -52,6 +56,8 @@ class AlertTemplatesController extends TemplatedController {
     }
 
     public function edit(int $id) {
+        $this->requireAction("alert_templates_write");
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `alert_type`, `template` FROM `alert_templates` WHERE `id` = ".escape($db, $id)) or fail($db->error);
@@ -77,6 +83,8 @@ class AlertTemplatesController extends TemplatedController {
     }
 
     public function remove(int $id) {
+        $this->requireAction("alert_templates_write");
+
         $db = connect();
 
         $db->query("DELETE FROM `alert_templates` WHERE `id` = ".escape($db, $id)) or fail($db->error);

@@ -8,6 +8,8 @@ require_once "exceptions/EntityNotFound.php";
 
 class CheckChartsController extends TemplatedController {
     public function index() {
+        $this->requireAction("check_charts_read");
+
         $db = connect();
 
         $order = "chart";
@@ -37,6 +39,8 @@ class CheckChartsController extends TemplatedController {
     }
 
     public function add() {
+        $this->requireAction("check_charts_write");
+
         $db = connect();
 
         $q = $db->query("SELECT `r`.`id`, `r`.`name`, COALESCE(`r`.`label`, `r`.`name`) AS `r_label`, `r`.`check_type_id`, 0 AS `selected` FROM `readings` `r` ORDER BY `r`.`name` ASC") or fail($db->error);
@@ -81,6 +85,8 @@ class CheckChartsController extends TemplatedController {
     }
 
     public function edit(int $id) {
+        $this->requireAction("check_charts_write");
+
         $db = connect();
 
         $q = $db->query("SELECT `g`.`id`, `g`.`name` AS `chart`, `t`.`name` AS `type`, `t`.`id` AS `type_id` FROM `check_charts` `g` JOIN `check_types` `t` ON (`g`.`check_type_id` = `t`.`id`) WHERE `g`.`id` = ".escape($db, $id)) or fail($db->error);
@@ -166,6 +172,8 @@ class CheckChartsController extends TemplatedController {
     }
 
     public function remove(int $id) {
+        $this->requireAction("check_charts_write");
+
         $db = connect();
         $db->query("DELETE FROM `check_charts` WHERE `id` = ".escape($db, $id)) or fail($db->error);
 

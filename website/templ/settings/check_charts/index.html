@@ -8,7 +8,9 @@
 </ol>
 
 <div class="btn-group">
-    <a class="btn btn-default" href="{{ url_for(['CheckChartsController', 'add']) }}"><span class="fa fa-plus"></span> Add</a>
+    {% if current_user.hasAction('check_charts_write') %}
+        <a class="btn btn-default" href="{{ url_for(['CheckChartsController', 'add']) }}"><span class="fa fa-plus"></span> Add</a>
+    {% endif %}
 </div>
 
 <table class="table table-striped table-condensed table-hover">
@@ -26,8 +28,10 @@
             <td>{{ chart.chart }}</td>
             <td>{{ chart.type }}</td>
             <td class="text-nowrap">
-                <a href="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
-                <a href="{{ url_for(['CheckChartsController', 'remove'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                {% if current_user.hasAction('check_charts_write') %}
+                    <a href="{{ url_for(['CheckChartsController', 'edit'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                    <a href="{{ url_for(['CheckChartsController', 'remove'], {'id': chart.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                {% endif %}
             </td>
         </tr>
     {% else %}

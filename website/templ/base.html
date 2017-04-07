@@ -33,17 +33,25 @@
                         <span class="hidden-xs hidden-sr"><span class="fa fa-gear"></span> <span class="caret"></span></span>
                     </a>
                     <ul class="dropdown-menu">
+                        {% if current_user.hasAction('alert_templates_read') %}
                         <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}"><span class="fa fa-fw fa-code"></span> Alert templates</a></li>
-                        <li><a href="{{ url_for(['CheckChartsController', 'index']) }}"><span class="fa fa-fw fa-area-chart"></span> Check charts</a></li>
+                        {% endif %}
+                        {% if current_user.hasAction('check_charts_read') %}
+                            <li><a href="{{ url_for(['CheckChartsController', 'index']) }}"><span class="fa fa-fw fa-area-chart"></span> Check charts</a></li>
+                        {% endif %}
                         {% if current_user.hasAction('check_types_read') %}
                             <li><a href="{{ url_for(['CheckTypesController', 'index']) }}"><span class="fa fa-fw fa-hand-o-right"></span> Check types</a></li>
                         {% endif %}
-                        {% if current_user.hasAnyAction('check_types_read', 'users_read', 'actions_read', 'roles_read') %}
+                        {% if current_user.hasAnyAction('alert_templates_read', 'check_charts_read', 'check_types_read', 'users_read', 'actions_read', 'roles_read') %}
                             <li class="divider" role="divider"></li>
                         {% endif %}
-                        {% if current_user.hasAnyAction('users_read', 'actions_read', 'roles_read') %}
+                        {% if current_user.hasAction('users_read') %}
                             <li><a href="{{ url_for(['UsersController', 'index']) }}"><span class="fa fa-fw fa-user"></span> Users</a></li>
+                        {% endif %}
+                        {% if current_user.hasAction('actions_read') %}
                             <li><a href="{{ url_for(['ActionsController', 'index']) }}"><span class="fa fa-fw fa-cube"></span> Actions</a></li>
+                        {% endif %}
+                        {% if current_user.hasAction('roles_read') %}
                             <li><a href="{{ url_for(['RolesController', 'index']) }}"><span class="fa fa-fw fa-cubes"></span> Roles</a></li>
                         {% endif %}
                         <li class="divider" role="divider"></li>

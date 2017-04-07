@@ -8,7 +8,9 @@
 </ol>
 
 <div class="btn-group" role="group">
-    <a href="{{ url_for(['AlertTemplatesController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% if current_user.hasAction('alert_templates_write') %}
+        <a href="{{ url_for(['AlertTemplatesController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% endif %}
 </div>
 
 <table class="table table-compacted table-striped table-hover">
@@ -24,8 +26,10 @@
             <tr>
                 <td>{{ template.alert_type }}</td>
                 <td class="td-shrink">
-                    <a href="{{ url_for(['AlertTemplatesController', 'edit'], {'id': template.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
-                    <a href="{{ url_for(['AlertTemplatesController', 'remove'], {'id': template.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                    {% if current_user.hasAction('alert_templates_write') %}
+                        <a href="{{ url_for(['AlertTemplatesController', 'edit'], {'id': template.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                        <a href="{{ url_for(['AlertTemplatesController', 'remove'], {'id': template.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-remove"></span> Remove</a>
+                    {% endif %}
                 </td>
             </tr>
         {% else %}
