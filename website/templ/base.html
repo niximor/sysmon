@@ -35,6 +35,12 @@
                         <li><a href="{{ url_for(['AlertTemplatesController', 'index']) }}"><span class="fa fa-fw fa-code"></span> Alert templates</a></li>
                         <li><a href="{{ url_for(['CheckChartsController', 'index']) }}"><span class="fa fa-fw fa-area-chart"></span> Check charts</a></li>
                         <li><a href="{{ url_for(['CheckTypesController', 'index']) }}"><span class="fa fa-fw fa-hand-o-right"></span> Check types</a></li>
+                        {% if current_user.hasAnyAction('users_read', 'actions_read', 'roles_read') %}
+                        <li class="divider" role="divider"></li>
+                        <li><a href="{{ url_for(['UsersController', 'index']) }}"><span class="fa fa-fw fa-user"></span> Users</a></li>
+                        <li><a href="{{ url_for(['ActionsController', 'index']) }}"><span class="fa fa-fw fa-cube"></span> Actions</a></li>
+                        <li><a href="{{ url_for(['RolesController', 'index']) }}"><span class="fa fa-fw fa-cubes"></span> Roles</a></li>
+                        {% endif %}
                         <li class="divider" role="divider"></li>
                         <li><a href="{{ url_for(['HelpController', 'index']) }}"><span class="fa fa-fw fa-question-circle-o"></span> Help</a></li>
                     </ul>

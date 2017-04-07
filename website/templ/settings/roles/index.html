@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block main %}
+
+<h1><span class="fa fa-cubes"></span> Roles</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['RolesController', 'index']) }}">Roles</a></li>
+</ol>
+
+<div class="row">
+    <div class="col-xs-6">
+        <div class="btn-group">
+            {% if current_user.hasAction('roles_write') %}
+                <a href="{{ url_for(['RolesController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-xs-6 text-right">
+        <div class="btn-group">
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': 'roles'}) }}" onclick="show_help('roles'); return false;" class="btn btn-default"><span class="fa fa-question-circle-o"></span> Help</a>
+        </div>
+    </div>
+</div>
+
+<table class="table table-border table-hover">
+    <thead>
+        <tr>
+            <th>Role</th>
+            <th>Users</th>
+            <th class="td-shrink"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for role in roles %}
+            <tr>
+                <td><a href="{{ url_for(['RolesController', 'detail'], {'id': role.id}) }}"><span class="fa fa-search"></span> {{ role.name }}</a></td>
+                <td>{{ role.users }}</td>
+                <td class="td-shrink text-nowrap">
+                    {% if current_user.hasAction('roles_write') %}
+                        <a href="{{ url_for(['RolesController', 'edit'], {'id': role.id}) }}?from=index" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                        <a href="{{ url_for(['RolesController', 'remove'], {'id': role.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this role?');"><span class="fa fa-remove"></span> Remove</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

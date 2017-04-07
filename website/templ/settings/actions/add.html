@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-cube"></span> Actions</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ActionsController', 'index']) }}">Actions</a></li>
+    <li><a href="{{ url_for(['ActionsController', 'add']) }}">Add</a></li>
+</ol>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h2 class="panel-title">Add action</h2>
+    </div>
+    <div class="panel-body">
+        <form action="{{ url_for(['ActionsController', 'add']) }}" method="post" class="form-horizontal">
+            <div class="form-group">
+                <label for="inputName" class="col-sm-2 control-label">Identifier:</label>
+                <div class="col-sm-10">
+                    <input type="text" name="name" id="inputName" value="{{ request.name }}" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Enter identifier of the action. The identifier is used in website code.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="inputDescription" class="col-sm-2 control-label">Title:</label>
+                <div class="col-sm-10">
+                    <input type="text" name="description" id="inputDescription" value="{{ request.description }}" class="form-control" />
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Enter human readable name of the action. The title is used through the user interface.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="inputParent" class="col-sm-2 control-label">Parent:</label>
+                <div class="col-sm-10">
+                    <select name="parent" id="inputParent" class="form-control">
+                        <option value="">-- No parent --</option>
+                        {% macro action_tree(actions, level) %}
+                            {% import _self as macros %}
+                            {% for action in actions %}
+                                <option value="{{ action.id }}">{% if level > 0 %}{% for i in range(0, level - 1) %}&nbsp;&nbsp;&nbsp;{% endfor %}{% endif %}{{ action.description }}</option>
+                                {{ macros.action_tree(action.childs, level + 1) }}
+                            {% endfor %}
+                        {% endmacro %}
+
+                        {% import _self as macros %}
+                        {{ macros.action_tree(actions, 0) }}
+                    </select>
+                </div>
+                <div class="col-sm-10 col-sm-offset-2">
+                    <p class="help-block">Select parent action to create hierarchy of actions. When user has some action that has parent, it automatically has also the parent action.</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" value="Add" class="btn btn-primary" />
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

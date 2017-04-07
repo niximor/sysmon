@@ -9,61 +9,95 @@ class ChecksController extends TemplatedController {
         $db = connect();
 
         $q = $db->query("SELECT
-                COUNT(DISTINCT `ch`.`id`) AS `checks`,
-                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
-            FROM `checks` `ch`
-            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)");
+                SUM(`s`.`checks`) AS `checks`,
+                SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `alerts`,
+                SUM(`s`.`disabled`) AS `disabled`,
+                SUM(`s`.`checks`) - SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `success`
+            FROM (SELECT
+                    1 AS `checks`,
+                    IF(`ch`.`enabled`, 0, 1) AS `disabled`,
+                    IF(`a`.`id` IS NOT NULL, 1, 0) AS `alerts`
+                FROM `checks` `ch`
+                LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+                GROUP BY `ch`.`id`
+            ) AS `s`") or fail($db->error);
 
         $total = $q->fetch_assoc();
-        $total["success"] = $total["checks"] - $total["alerts"];
 
         $q = $db->query("SELECT
                 `s`.`hostname`,
-                COUNT(DISTINCT `ch`.`id`) AS `checks`,
-                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
-            FROM `checks` `ch`
-            JOIN `servers` `s` ON (`ch`.`server_id` = `s`.`id`)
-            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
-            GROUP BY `s`.`id`
+                SUM(`s`.`checks`) AS `checks`,
+                SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `alerts`,
+                SUM(`s`.`disabled`) AS `disabled`,
+                SUM(`s`.`checks`) - SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `success`
+            FROM (SELECT
+                    `s`.`hostname`,
+                    `ch`.`server_id`,
+                    1 AS `checks`,
+                    IF(`ch`.`enabled`, 0, 1) AS `disabled`,
+                    IF(`a`.`id` IS NOT NULL, 1, 0) AS `alerts`
+                FROM `checks` `ch`
+                JOIN `servers` `s` ON (`ch`.`server_id` = `s`.`id`)
+                LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+                GROUP BY `ch`.`id`
+            ) AS `s`
+            GROUP BY `s`.`server_id`
             ORDER BY `s`.`hostname` ASC") or fail($db->error);
 
         $hosts = [];
         while ($a = $q->fetch_assoc()) {
-            $a["success"] = $a["checks"] - $a["alerts"];
             $hosts[] = $a;
         }
 
         $q = $db->query("SELECT
-                `g`.`name`,
-                `g`.`id`,
-                COUNT(DISTINCT `ch`.`id`) AS `checks`,
-                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
-            FROM `checks` `ch`
-            LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
-            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
-            GROUP BY `ch`.`group_id`
-            ORDER BY `g`.`name` ASC") or fail($db->error);
+                `s`.`name`,
+                `s`.`id`,
+                SUM(`s`.`checks`) AS `checks`,
+                SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `alerts`,
+                SUM(`s`.`disabled`) AS `disabled`,
+                SUM(`s`.`checks`) - SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `success`
+            FROM (SELECT
+                    `g`.`name`,
+                    `g`.`id`,
+                    1 AS `checks`,
+                    IF(`ch`.`enabled`, 0, 1) AS `disabled`,
+                    IF(`a`.`id` IS NOT NULL, 1, 0) AS `alerts`
+                FROM `checks` `ch`
+                LEFT JOIN `check_groups` `g` ON (`ch`.`group_id` = `g`.`id`)
+                LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+                GROUP BY `ch`.`id`
+            ) AS `s`
+            GROUP BY `s`.`id`
+            ORDER BY `s`.`name` ASC") or fail($db->error);
 
         $groups = [];
         while ($a = $q->fetch_assoc()) {
-            $a["success"] = $a["checks"] - $a["alerts"];
             $groups[] = $a;
         }
 
         $q = $db->query("SELECT
-                `t`.`name`,
-                `t`.`id`,
-                COUNT(DISTINCT `ch`.`id`) AS `checks`,
-                COUNT(DISTINCT `a`.`check_id`) AS `alerts`
-            FROM `checks` `ch`
-            JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
-            LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
-            GROUP BY `ch`.`type_id`
-            ORDER BY `t`.`name` ASC") or fail($db->error);
+                `s`.`name`,
+                `s`.`id`,
+                SUM(`s`.`checks`) AS `checks`,
+                SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `alerts`,
+                SUM(`s`.`disabled`) AS `disabled`,
+                SUM(`s`.`checks`) - SUM(`s`.`alerts`) - SUM(`s`.`disabled`) AS `success`
+            FROM (SELECT
+                    `t`.`name`,
+                    `t`.`id`,
+                    1 AS `checks`,
+                    IF(`ch`.`enabled`, 0, 1) AS `disabled`,
+                    IF(`a`.`id` IS NOT NULL, 1, 0) AS `alerts`
+                FROM `checks` `ch`
+                JOIN `check_types` `t` ON (`ch`.`type_id` = `t`.`id`)
+                LEFT JOIN `alerts` `a` ON (`a`.`check_id` = `ch`.`id` AND `a`.`active` = 1)
+                GROUP BY `ch`.`id`
+            ) AS `s`
+            GROUP BY `s`.`id`
+            ORDER BY `s`.`name` ASC") or fail($db->error);
 
         $types = [];
         while ($a = $q->fetch_assoc()) {
-            $a["success"] = $a["checks"] - $a["alerts"];
             $types[] = $a;
         }
 

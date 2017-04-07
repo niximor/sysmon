@@ -8,6 +8,11 @@ class ErrorController extends TemplatedController {
         return $this->renderTemplate("error404.html");
     }
 
+    public function error403(AccessDenied $e) {
+        http_response_code(403);
+        return $this->renderTemplate("error403.html", ["error" => $e]);
+    }
+
     public function error500(Throwable $t) {
         http_response_code(500);
 

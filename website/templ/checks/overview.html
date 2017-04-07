@@ -38,8 +38,9 @@
                     <tr>
                         <td><a href="{{ url_for(['ChecksController', 'index']) }}">Total</a></td>
                         <td class="td-shrink text-nowrap text-right">
-                            {% if total.alerts > 0 %}<span class="label label-danger">{{ total.alerts }}</span>{% endif %}
-                            {% if total.success > 0 %}<span class="label label-success">{{ total.success }}</span>{% endif %}
+                            {% if total.alerts > 0 %}<span class="label label-danger" title="Checks with alerts">{{ total.alerts }}</span>{% endif %}
+                            {% if total.success > 0 %}<span class="label label-success" title="Succeeded checks">{{ total.success }}</span>{% endif %}
+                            {% if total.disabled > 0 %}<span class="label label-default" title="Suspended checks">{{ total.disabled }}</span>{% endif %}
                         </td>
                     </tr>
                 </tbody>
@@ -64,8 +65,9 @@
                         <tr>
                             <td><a href="{{ url_for(['ChecksController', 'index']) }}?host={{ host.hostname }}">{{ host.hostname }}</a></td>
                             <td class="td-shrink text-nowrap text-right">
-                                {% if host.alerts > 0 %}<span class="label label-danger">{{ host.alerts }}</span>{% endif %}
-                                {% if host.success > 0 %}<span class="label label-success">{{ host.success }}</span>{% endif %}
+                                {% if host.alerts > 0 %}<span class="label label-danger" title="Checks with alerts">{{ host.alerts }}</span>{% endif %}
+                                {% if host.success > 0 %}<span class="label label-success" title="Succeeded checks">{{ host.success }}</span>{% endif %}
+                                {% if host.disabled > 0 %}<span class="label label-default" title="Suspended checks">{{ host.disabled }}</span>{% endif %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -93,8 +95,9 @@
                         <tr>
                             <td><a href="{{ url_for(['ChecksController', 'index']) }}?group={{ group.id|default(0) }}">{{ group.name|default("No group") }}</a></td>
                             <td class="td-shrink text-nowrap text-right">
-                                {% if group.alerts > 0 %}<span class="label label-danger">{{ group.alerts }}</span>{% endif %}
-                                {% if group.success > 0 %}<span class="label label-success">{{ group.success }}</span>{% endif %}
+                                {% if group.alerts > 0 %}<span class="label label-danger" title="Checks with alerts">{{ group.alerts }}</span>{% endif %}
+                                {% if group.success > 0 %}<span class="label label-success" title="Succeeded checks">{{ group.success }}</span>{% endif %}
+                                {% if group.disabled > 0 %}<span class="label label-default" title="Suspended checks">{{ group.disabled }}</span>{% endif %}
                             </td>
                         </tr>
                     {% endfor %}
@@ -120,8 +123,9 @@
                         <tr>
                             <td><a href="{{ url_for(['ChecksController', 'index']) }}?type={{ type.id }}">{{ type.name }}</a></td>
                             <td class="td-shrink text-nowrap text-right">
-                                {% if type.alerts > 0 %}<span class="label label-danger">{{ type.alerts }}</span>{% endif %}
+                                {% if type.alerts > 0 %}<span class="label label-danger" title="Checks with alerts">{{ type.alerts }}</span>{% endif %}
                                 {% if type.success > 0 %}<span class="label label-success">{{ type.success }}</span>{% endif %}
+                                {% if type.disabled > 0 %}<span class="label label-default">{{ type.disabled }}</span>{% endif %}
                             </td>
                         </tr>
                     {% endfor %}

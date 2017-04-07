@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-user"></span> Users</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['UsersController', 'index']) }}">Users</a></li>
+    <li><a href="{{ url_for(['UsersController', 'detail'], {'id': user.id}) }}">{{ user.name }}</a></li>
+</ol>
+
+<div class="btn-group">
+    {% if current_user.hasAction('users_write') %}
+        <a href="{{ url_for(['UsersController', 'edit'], {'id': user.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+        <a href="{{ url_for(['UsersController', 'remove'], {'id': user.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this user?');"><span class="fa fa-remove"></span> Remove</a>
+    {% endif %}
+</div>
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h3 class="panel-title">{{ user.name }}</h3>
+    </div>
+    <div class="panel-body">
+        <dl class="dl-horizontal">
+            <dt>Last login:</dt>
+            <dd>{{ user.last_login|datetime }}</dd>
+        </dl>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Roles</h3>
+            </div>
+            <table class="table table-compacted table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for role in roles %}
+                        <tr>
+                            <td>{{ role.name }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td><div class="well">User does not have any role assigned.</div></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-sm-6">
+        <div class="panel panel-default">
+            <div class="panel-heading clearfix">
+                <h3 class="panel-title">Actions</h3>
+            </div>
+            <table class="table table-compacted table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% macro action_tree(actions, level) %}
+                        {% import _self as macros %}
+                        {% for action in actions %}
+                            <tr>
+                                <td>
+                                    {% if level > 0 %}{% for i in range(0, level - 1) %}&nbsp;&nbsp;&nbsp;{% endfor %}{% endif %}
+                                    {{ action.description }}
+                                </td>
+                            </tr>
+                            {{ macros.action_tree(action.childs, level + 1) }}
+                        {% endfor %}
+                    {% endmacro %}
+
+                    {% import _self as macros %}
+                    {{ macros.action_tree(actions, 0) }}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

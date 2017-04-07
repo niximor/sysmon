@@ -7,6 +7,8 @@ require_once "fastrouter/Controller.php";
 require_once "models/Message.php";
 require_once "models/CurrentUser.php";
 
+require_once "exceptions/AccessDenied.php";
+
 class TemplatedController extends TwigEnv implements \nixfw\fastrouter\Controller {
     protected function renderTemplate($name, $context = []) {
         $template = $this->twig->load($name);
@@ -18,7 +20,7 @@ class TemplatedController extends TwigEnv implements \nixfw\fastrouter\Controlle
                 "post" => $_POST,
                 "total_alerts_count" => $this->countAlerts(),
                 "messages" => Message::get(),
-                "current_user" => new CurrentUser()
+                "current_user" => CurrentUser::i()
             ]
         ));
     }
@@ -29,6 +31,18 @@ class TemplatedController extends TwigEnv implements \nixfw\fastrouter\Controlle
         $db->commit();
 
         return $q->fetch_array()["count"];
+    }
 
+    public function requireAction($action) {
+        if (!CurrentUser::i()->hasAction($action)) {
+            $db = connect();
+            $q = $db->query("SELECT `id`, `name`, `description` FROM `actions` WHERE `name` = ".escape($db, $action));
+
+            if ($a = $q->fetch_assoc()) {
+                throw new Accessdenied($a);
+            } else {
+                throw new AccessDenied(["id" => NULL, "name" => $action, "description" => $action]);
+            }
+        }
     }
 }

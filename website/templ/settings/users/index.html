@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-user"></span> Users</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['UsersController', 'index']) }}">Users</a></li>
+</ol>
+
+<div class="btn-group">
+    {% if current_user.hasAction('users_write') %}
+        <a href="{{ url_for(['UsersController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% endif %}
+</div>
+
+<table class="table table-compacted table-striped table-hover">
+    <thead>
+        <tr>
+            <th>User name</th>
+            <th>Last login</th>
+            <th class="td-shrink"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for user in users %}
+            <tr>
+                <td><a href="{{ url_for(['UsersController', 'detail'], {'id': user.id}) }}"><span class="fa fa-search"></span> {{ user.name }}</a></td>
+                <td>{{ user.last_login|datetime }}</td>
+                <td class="td-shrink text-nowrap">
+                    {% if current_user.hasAction('users_write') %}
+                        <a href="{{ url_for(['UsersController', 'edit'], {'id': user.id}) }}?from=index" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                        <a href="{{ url_for(['UsersController', 'remove'], {'id': user.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this user?');"><span class="fa fa-remove"></span> Remove</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

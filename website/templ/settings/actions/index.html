@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block main %}
+<h1><span class="fa fa-cube"></span> Actions</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ActionsController', 'index']) }}">Actions</a></li>
+</ol>
+
+<div class="row">
+    <div class="col-xs-6">
+        <div class="btn-group">
+            {% if current_user.hasAction('actions_write') %}
+                <a href="{{ url_for(['ActionsController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-xs-6 text-right">
+        <div class="btn-group">
+            <a href="{{ url_for(['HelpController', 'topic'], {'topic': 'actions'}) }}" onclick="show_help('actions'); return false;" class="btn btn-default"><span class="fa fa-question-circle-o"></span> Help</a>
+        </div>
+    </div>
+</div>
+
+<table class="table table-compacted table-border table-hover">
+    <thead>
+        <tr>
+            <th>Action</th>
+            <th>Identifier</th>
+            <th class="td-shrink"></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% macro action_tree(actions, level) %}
+            {% import _self as macros %}
+            {% for action in actions %}
+                <tr>
+                    <td>{% if level > 0 %}{% for i in range(0, level - 1) %}&nbsp;&nbsp;&nbsp;{% endfor %}{% endif %}{{ action.description }}</td>
+                    <td>{{ action.name }}</td>
+                    <td class="td-shrink text-nowrap">
+                        {% if current_user.hasAction('actions_write') %}
+                            <a href="{{ url_for(['ActionsController', 'edit'], {'id': action.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                            <a href="{{ url_for(['ActionsController', 'remove'], {'id': action.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this action?');"><span class="fa fa-remove"></span> Remove</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {{ macros.action_tree(action.childs, level + 1) }}
+            {% endfor %}
+        {% endmacro %}
+
+        {% import _self as macros %}
+        {{ macros.action_tree(actions, level) }}
+    </tbody>
+</table>
+{% endblock %}

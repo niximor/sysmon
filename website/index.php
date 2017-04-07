@@ -83,6 +83,26 @@ if (Session::get("user_id")) {
     $router->bind("/settings/check-types/edit/<id>", array("CheckTypesController", "edit"));
     $router->bind("/settings/check-types/remove/<id>", array("CheckTypesController", "remove"));
 
+    require_once "controllers/UsersController.php";
+    $router->bind("/settings/users/", ["UsersController", "index"]);
+    $router->bind("/settings/users/add", ["UsersController", "add"]);
+    $router->bind("/settings/users/<id>", ["UsersController", "detail"]);
+    $router->bind("/settings/users/<id>/edit", ["UsersController", "edit"]);
+    $router->bind("/settings/users/<id>/remove", ["UsersController", "remove"]);
+
+    require_once "controllers/ActionsController.php";
+    $router->bind("/settings/actions/", ["ActionsController", "index"]);
+    $router->bind("/settings/actions/add", ["ActionsController", "add"]);
+    $router->bind("/settings/actions/edit/<id>", ["ActionsController", "edit"]);
+    $router->bind("/settings/actions/remove/<id>", ["ActionsController", "remove"]);
+
+    require_once "controllers/RolesController.php";
+    $router->bind("/settings/roles/", ["RolesController", "index"]);
+    $router->bind("/settings/roles/add/", ["RolesController", "add"]);
+    $router->bind("/settings/roles/<id>/", ["RolesController", "detail"]);
+    $router->bind("/settings/roles/<id>/edit", ["RolesController", "edit"]);
+    $router->bind("/settings/roles/<id>/remove", ["RolesController", "remove"]);
+
     require_once "controllers/HelpController.php";
     $router->bind("/help/", array("HelpController", "index"));
     $router->bind("/help/add-topic", array("HelpController", "add"));
@@ -131,6 +151,9 @@ if ($route) {
     } catch (EntityNotFound $e) {
         $ec = new ErrorController();
         echo $ec->error404($e);
+    } catch (AccessDenied $e) {
+        $ec = new ErrorController();
+        echo $ec->error403($e);
     } catch (Throwable $t) {
         $ec = new ErrorController();
         echo $ec->error500($t);
