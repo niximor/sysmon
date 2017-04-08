@@ -3,6 +3,8 @@
 require_once "controllers/TemplatedController.php";
 
 require_once "models/Message.php";
+require_once "models/FormSave.php";
+require_once "models/CurrentUser.php";
 
 class ProfileController extends TemplatedController {
     public function index() {
@@ -64,5 +66,53 @@ class ProfileController extends TemplatedController {
         }
 
         header("Location: ".twig_url_for(["ProfileController", "index"]));
+    }
+
+    public function change_password() {
+        $fs = new FormSave($_REQUEST["formsave"] ?? NULL);
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $db = connect();
+
+            $fs->require("old_password", "Old password");
+            $fs->require("password", "New password");
+            $fs->require("password1", "Retype new password");
+
+            if ($fs->getValue("password") && $fs->getValue("password1") && $fs->getValue("password") != $fs->getValue("password1")) {
+                $fs->addError("password", "Passwords did not match.");
+            }
+
+            if ($fs->getValue("old_password")) {
+                $q = $db->query("SELECT `salt`, `password` FROM `users` WHERE `id` = ".escape($db, CurrentUser::ID()));
+                $a = $q->fetch_assoc();
+                if (hash("sha256", $a["salt"].$fs->getValue("old_password")) != $a["password"]) {
+                    $fs->addError("old_password", "Old password is incorrect.");
+                }
+            }
+
+            if (!$fs->isValid()) {
+                header("Location: ".twig_url_for(['ProfileController', 'change_password'])."?formsave=".$fs->save());
+                exit;
+            }
+
+            $salt = hash("sha256", ((string)time())."-".((string)mt_rand()));
+            $password = hash("sha256", $salt.$fs->getValue("password"));
+
+            $db->query("UPDATE `users` SET
+                `salt` = ".escape($db, $salt).",
+                `password` = ".escape($db, $password)."
+                WHERE `id` = ".escape($db, CurrentUser::ID()));
+
+            $db->commit();
+
+            Message::create(Message::SUCCESS, "Password has been changed.");
+            header("Location: ".twig_url_for(['ProfileController', 'index']));
+        }
+
+        return $this->renderTemplate("profile/change_password.html", [
+            "form" => $fs->getValues(),
+            "formerrors" => $fs->getErrors(),
+            "formsave" => $fs->save()
+        ]);
     }
 }

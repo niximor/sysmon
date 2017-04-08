@@ -1,10 +1,15 @@
 {% extends "base.html" %}
+{% block title %}Access denied{% endblock %}
 {% block main %}
 <div class="page-header">
     <h1>Access denied</h1>
 </div>
 
 <div class="alert alert-danger">
+    {% if error|get_class == "ActionAccessDenied" %}
     You don't have sufficient privileges to access this page. You need to have <strong>{{ error.action.description }}</strong> action assigned to you.
+    {% else %}
+        {{ error.getMessage() }}
+    {% endif %}
 </div>
 {% endblock %}

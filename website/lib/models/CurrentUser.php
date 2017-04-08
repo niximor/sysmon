@@ -18,6 +18,10 @@ class CurrentUser {
         return self::$instance;
     }
 
+    public static function ID() {
+        return self::i()->id;
+    }
+
     private function __construct() {
         self::$instance = $this;
 

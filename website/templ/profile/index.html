@@ -1,6 +1,17 @@
 {% extends "base.html" %}
+{% block title %}
+Profile
+{% endblock %}
 {% block main %}
-<h1>{{ current_user.username }}</h1>
+<h1><span class="fa fa-user"></span> {{ current_user.username }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ProfileController', 'index']) }}">Profile</a></li>
+</ol>
+
+<div class="btn-group">
+    <a href="{{ url_for(['ProfileController', 'change_password']) }}" class="btn btn-default">Change password</a>
+</div>
 
 <div class="panel panel-default">
     <div class="panel-heading clearfix">

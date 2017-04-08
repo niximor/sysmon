@@ -11,6 +11,7 @@ class TwigEnv {
         $this->twig->addFilter(new Twig_Filter("timestamp", array($this, "twig_filter_timestamp")));
         $this->twig->addFilter(new Twig_Filter("duration", "format_duration"));
         $this->twig->addFilter(new Twig_Filter("sorted", array($this, "twig_sorted"), ["is_safe" => ["html"]]));
+        $this->twig->addFilter(new Twig_Filter("get_class", "get_class"));
 
         $this->twig->addFunction(new Twig_Function("url_for", "twig_url_for"));
 

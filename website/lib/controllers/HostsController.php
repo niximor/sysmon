@@ -131,7 +131,7 @@ class HostsController extends TemplatedController implements CronInterface {
 
     public function charts($id) {
         $this->requireAction('hosts_read');
-        $this->requireAction('charts_read');
+        $this->requireAction('checks_read');
 
         $db = connect();
 

@@ -1,0 +1,13 @@
+{% macro error_class(formerrors, name) %}
+    {% if attribute(formerrors, name) %}has-error{% endif %}
+{% endmacro %}
+
+{% macro error(formerrors, name) %}
+    {% if attribute(formerrors, name) %}
+        <div class="col-sm-10 col-sm-offset-2">
+            {% for error in attribute(formerrors, name) %}
+                <p class="help-block">{{ error|raw }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endmacro %}
