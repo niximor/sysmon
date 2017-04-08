@@ -15,14 +15,6 @@ class TemplatedController extends TwigEnv implements \nixfw\fastrouter\Controlle
         return $template->render($context);
     }
 
-    public function countAlerts() {
-        $db = connect();
-        $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1");
-        $db->commit();
-
-        return $q->fetch_array()["count"];
-    }
-
     public function requireAction($action) {
         if (!CurrentUser::i()->hasAction($action)) {
             $db = connect();

@@ -24,7 +24,10 @@
                 <li{% if controller == 'HostsController' %} class="active"{% endif %}><a href="{{ url_for(['HostsController', 'index']) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
                 <li{% if controller == 'PackagesController' %} class="active"{% endif %}><a href="{{ url_for(['PackagesController', 'index']) }}"><span class="fa fa-dropbox"></span> Packages</a></li>
                 <li{% if controller == 'StampsController' %} class="active"{% endif %}><a href="{{ url_for(['StampsController', 'index']) }}"><span class="fa fa-heartbeat"></span> Stamps</a></li>
+
+                {% if current_user.hasAction('checks_read') %}
                 <li{% if controller == 'ChecksController' %} class="active"{% endif %}><a href="{{ url_for(['ChecksController', 'overview']) }}"><span class="fa fa-hand-o-right"></span> Checks</a></li>
+                {% endif %}
 
                 {% if current_user.hasAction('settings') %}
                 <li class="dropdown">

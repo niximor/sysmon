@@ -24,7 +24,9 @@
 </ol>
 
 <div class="btn-group" role="group">
+    {% if current_user.hasAction('checks_write') %}
     <a href="{{ url_for(['ChecksController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add</a>
+    {% endif %}
 </div>
 
 <div class="panel panel-default">
@@ -119,13 +121,17 @@
                 <td>{{ check.type }}</td>
                 <td>{{ check.interval|duration }}</td>
                 <td class="td-shrink">
-                    {% if check.enabled %}
-                        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
-                    {% else %}
-                        <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+                    {% if current_user.hasAction('checks_suspend') %}
+                        {% if check.enabled %}
+                            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
+                        {% else %}
+                            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+                        {% endif %}
                     {% endif %}
-                    <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
-                    <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+                    {% if current_user.hasAction('checks_write') %}
+                        <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}" class="btn btn-default btn-sm"><span class="fa fa-edit"></span> Modify</a>
+                        <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}" class="btn btn-default btn-sm" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+                    {% endif %}
                 </td>
             </tr>
         {% else %}

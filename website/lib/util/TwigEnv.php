@@ -23,6 +23,14 @@ class TwigEnv {
         $this->twig->addGlobal("messages", Message::get());
     }
 
+    public function countAlerts() {
+        $db = connect();
+        $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1");
+        $db->commit();
+
+        return $q->fetch_array()["count"];
+    }
+
     public static function twig_filter_datetime($datetime, $format=NULL) {
         if (is_null($format)) {
             $format = "Y-m-d G:i:s";

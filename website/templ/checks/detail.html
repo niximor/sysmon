@@ -9,13 +9,17 @@
 
 <div class="btn-toolbar">
     <div class="btn-group" role="group">
-        {% if check.enabled %}
-            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
-        {% else %}
-            <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+        {% if current_user.hasAction('checks_suspend') %}
+            {% if check.enabled %}
+                <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-success" title="Click to pause."><span class="fa fa-play"></span> Active</span></a>
+            {% else %}
+                <a href="{{ url_for(['ChecksController', 'toggle'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="text-muted" title="Click to activate."><span class="fa fa-pause"></span> Paused</span></a>
+            {% endif %}
         {% endif %}
-        <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
-        <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+        {% if current_user.hasAction('checks_write') %}
+            <a href="{{ url_for(['ChecksController', 'edit'], {'id': check.id}) }}?back=detail" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+            <a href="{{ url_for(['ChecksController', 'remove'], {'id': check.id}) }}?back=detail" class="btn btn-default" onclick="return confirm('Do you really want to remove this check?')"><span class="fa fa-remove"></span> Remove</a>
+        {% endif %}
     </div>
 
     {% if charts %}

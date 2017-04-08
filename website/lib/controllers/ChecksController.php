@@ -6,6 +6,8 @@ require_once "models/Message.php";
 
 class ChecksController extends TemplatedController {
     public function overview() {
+        $this->requireAction("checks_read");
+
         $db = connect();
 
         $q = $db->query("SELECT
@@ -110,6 +112,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function index() {
+        $this->requireAction("checks_read");
+
         $db = connect();
 
         $order = "name";
@@ -205,6 +209,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function detail($id) {
+        $this->requireAction("checks_read");
+
         $db = connect();
 
         $q = $db->query("SELECT
@@ -245,6 +251,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function charts($id) {
+        $this->requireAction("checks_read");
+
         $db = connect();
         $q = $db->query("SELECT
             `ch`.`id`,
@@ -270,6 +278,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function chart_detail($check_id, $chart_id) {
+        $this->requireAction("checks_read");
+
         $db = connect();
 
         $q = $db->query("SELECT `ch`.`id`, `ch`.`name`, `ch`.`type_id`, `ch`.`server_id`, `s`.`hostname` FROM `checks` `ch` JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`) WHERE `ch`.`id` = ".escape($db, $check_id)) or fail($db->error);
@@ -293,6 +303,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function group_detail($group_id) {
+        $this->requireAction("checks_read");
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `name` FROM `check_groups` WHERE `id` = ".escape($db, $group_id)) or fail($db->error);
@@ -344,6 +356,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function chart_data(int $id, int $chart_id) {
+        $this->requireAction("checks_read");
+
         $granularity = "daily";
         if (isset($_REQUEST["granularity"]) && in_array($_REQUEST["granularity"], ["daily", "weekly", "monthly", "yearly"])) {
             $granularity = $_REQUEST["granularity"];
@@ -1044,6 +1058,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function add() {
+        $this->requireAction("checks_write");
+
         $db = connect();
 
         $params = $this->combineParams();
@@ -1089,6 +1105,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function edit($id) {
+        $this->requireAction("checks_write");
+
         $db = connect();
 
         $q = $db->query("SELECT
@@ -1156,6 +1174,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function toggle($id) {
+        $this->requireAction("checks_suspend");
+
         $db = connect();
 
         $db->query("UPDATE `checks` SET `enabled` = IF(`enabled`, 0, 1) WHERE `id` = ".escape($db, $id));
@@ -1170,6 +1190,8 @@ class ChecksController extends TemplatedController {
     }
 
     public function remove($id) {
+        $this->requireAction("checks_write");
+
         $db = connect();
 
         $db->query("DELETE FROM `checks` WHERE `id` = ".escape($db, $id));
