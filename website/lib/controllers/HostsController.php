@@ -9,6 +9,8 @@ require_once "exceptions/EntityNotFound.php";
 
 class HostsController extends TemplatedController implements CronInterface {
     public function index() {
+        $this->requireAction('hosts_read');
+
         $db = connect();
 
         $order = "hostname";
@@ -41,6 +43,8 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function detail($id) {
+        $this->requireAction('hosts_read');
+
         $db = connect();
 
         $q = $db->query("SELECT `s`.`id`, `s`.`hostname`, `s`.`distribution`, `s`.`version`, `s`.`kernel`, `s`.`ip`, `s`.`last_check`, `s`.`uptime`, `s`.`virtual` FROM `servers` `s`  WHERE `id` = '".$db->real_escape_string($id)."'") or fail($db->error);
@@ -59,6 +63,8 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function history($id) {
+        $this->requireAction('hosts_read');
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `id` = ".escape($db, $id)) or fail($db->error);
@@ -124,6 +130,9 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function charts($id) {
+        $this->requireAction('hosts_read');
+        $this->requireAction('charts_read');
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `hostname` FROM `servers` WHERE `id` = ".escape($db, $id));
@@ -166,6 +175,8 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function add() {
+        $this->requireAction('hosts_write');
+
         $db = connect();
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -205,6 +216,8 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function edit($id) {
+        $this->requireAction('hosts_write');
+
         $db = connect();
 
         $q = $db->query("SELECT
@@ -253,6 +266,8 @@ class HostsController extends TemplatedController implements CronInterface {
     }
 
     public function remove($id) {
+        $this->requireAction('hosts_write');
+
         $db = connect();
 
         $db->query("DELETE FROM `servers` WHERE `id` = ".escape($db, $id)." AND `virtual` = 1") or fail($db->error);

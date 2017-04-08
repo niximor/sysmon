@@ -91,6 +91,21 @@ class Alert {
             $where[] = "`a`.`stamp_id` = ".escape($db, $options["stamp_id"]);
         }
 
+        // No right to see hosts, so host-only alerts will be hidden.
+        if (!CurrentUser::i()->hasAction('hosts_read')) {
+            $where[] = "(`a`.`stamp_id` IS NOT NULL OR `a`.`check_id` IS NOT NULL)";
+        }
+
+        // No right to see checks, hide alerts for checks.
+        if (!CurrentUser::i()->hasAction('checks_read')) {
+            $where[] = "`a`.`check_id` IS NULL";
+        }
+
+        // No right to see stamps, hide alerts for stamps.
+        if (!CurrentUser::i()->hasAction('stamps_read')) {
+            $where[] = "`a`.`stamp_id` IS NULL";
+        }
+
         $query = "SELECT
             `s`.`hostname`,
             `a`.`server_id`,

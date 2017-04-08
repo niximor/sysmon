@@ -21,7 +21,10 @@
                         {% endif %}
                     </a>
                 </li>
+
+                {% if current_user.hasAction('hosts_read') %}
                 <li{% if controller == 'HostsController' %} class="active"{% endif %}><a href="{{ url_for(['HostsController', 'index']) }}"><span class="fa fa-hdd-o"></span> Hosts</a></li>
+                {% endif %}
 
                 {% if current_user.hasAction('packages_read') %}
                 <li{% if controller == 'PackagesController' %} class="active"{% endif %}><a href="{{ url_for(['PackagesController', 'index']) }}"><span class="fa fa-dropbox"></span> Packages</a></li>

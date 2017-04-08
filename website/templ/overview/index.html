@@ -7,56 +7,73 @@
 </ol>
 
 <div class="row">
-    <a href="{{ url_for(['HostsController', 'index']) }}" class="col-sm-4 box">
-        <div class="panel {% if hosts.alert_count > 0 %}panel-danger{% else %}panel-success{% endif %}">
-            <div class="panel-heading clearfix">
-                <h3 class="panel-title"><span class="fa fa-hdd-o"></span> Hosts</h3>
-            </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    <dt>Total number of hosts:</dt>
-                    <dd>{{ hosts.total_count }}</dd>
+    {% set items = 0 %}
+    {% if current_user.hasAction('hosts_read') %}
+        {% set items = items + 1 %}
+    {% endif %}
+    {% if current_user.hasAction('stamps_read') %}
+        {% set items = items + 1 %}
+    {% endif %}
+    {% if current_user.hasAction('checks_read') %}
+        {% set items = items + 1 %}
+    {% endif %}
 
-                    <dt>Hosts with alerts:</dt>
-                    <dd>{{ hosts.alert_count }}</dd>
-                </dl>
-            </div>
-        </div>
-    </a>
+    {% if current_user.hasAction('hosts_read') %}
+        <a href="{{ url_for(['HostsController', 'index']) }}" class="col-sm-{{ 12 / items }} box">
+            <div class="panel {% if hosts.alert_count > 0 %}panel-danger{% else %}panel-success{% endif %}">
+                <div class="panel-heading clearfix">
+                    <h3 class="panel-title"><span class="fa fa-hdd-o"></span> Hosts</h3>
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>Total number of hosts:</dt>
+                        <dd>{{ hosts.total_count }}</dd>
 
-    <a href="{{ url_for(['StampsController', 'index']) }}" class="col-sm-4 box">
-        <div class="panel {% if stamps.failed > 0 %}panel-danger{% else %}panel-success{% endif %}">
-            <div class="panel-heading clearfix">
-                <h3 class="panel-title"><span class="fa fa-heartbeat"></span> Stamps</h3>
+                        <dt>Hosts with alerts:</dt>
+                        <dd>{{ hosts.alert_count }}</dd>
+                    </dl>
+                </div>
             </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    <dt>Total number of stamps:</dt>
-                    <dd>{{ stamps.total_count }}</dd>
+        </a>
+    {% endif %}
 
-                    <dt>Failed stamps:</dt>
-                    <dd>{{ stamps.failed }}</dd>
-                </dl>
-            </div>
-        </div>
-    </a>
+    {% if current_user.hasAction('stamps_read') %}
+        <a href="{{ url_for(['StampsController', 'index']) }}" class="col-sm-{{ 12 / items }} box">
+            <div class="panel {% if stamps.failed > 0 %}panel-danger{% else %}panel-success{% endif %}">
+                <div class="panel-heading clearfix">
+                    <h3 class="panel-title"><span class="fa fa-heartbeat"></span> Stamps</h3>
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>Total number of stamps:</dt>
+                        <dd>{{ stamps.total_count }}</dd>
 
-    <a href="{{ url_for(['ChecksController', 'index']) }}" class="col-sm-4 box">
-        <div class="panel {% if checks.failed > 0 %}panel-danger{% else %}panel-success{% endif %}">
-            <div class="panel-heading clearfix">
-                <h3 class="panel-title"><span class="fa fa-hand-o-right"></span> Checks</h3>
+                        <dt>Failed stamps:</dt>
+                        <dd>{{ stamps.failed }}</dd>
+                    </dl>
+                </div>
             </div>
-            <div class="panel-body">
-                <dl class="dl-horizontal">
-                    <dt>Total number of checks:</dt>
-                    <dd>{{ checks.total_count }}</dd>
+        </a>
+    {% endif %}
 
-                    <dt>Failed checks:</dt>
-                    <dd>{{ checks.failed }}</dd>
-                </dl>
+    {% if current_user.hasAction('checks_read') %}
+        <a href="{{ url_for(['ChecksController', 'index']) }}" class="col-sm-{{ 12 / items }} box">
+            <div class="panel {% if checks.failed > 0 %}panel-danger{% else %}panel-success{% endif %}">
+                <div class="panel-heading clearfix">
+                    <h3 class="panel-title"><span class="fa fa-hand-o-right"></span> Checks</h3>
+                </div>
+                <div class="panel-body">
+                    <dl class="dl-horizontal">
+                        <dt>Total number of checks:</dt>
+                        <dd>{{ checks.total_count }}</dd>
+
+                        <dt>Failed checks:</dt>
+                        <dd>{{ checks.failed }}</dd>
+                    </dl>
+                </div>
             </div>
-        </div>
-    </a>
+        </a>
+    {% endif %}
 </div>
 
 <div class="panel panel-default">

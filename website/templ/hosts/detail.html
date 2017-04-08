@@ -7,11 +7,13 @@
     <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
 </ol>
 
-{% if host.virtual %}
-<div class="btn-group" role="group">
-    <a href="{{ url_for(['HostsController', 'edit'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
-    <a href="{{ url_for(['HostsController', 'remove'], {'id': host.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this device?');"><span class="fa fa-remove"></span> Remove</a>
-</div>
+{% if current_user.hasAction('hosts_write') %}
+    {% if host.virtual %}
+        <div class="btn-group" role="group">
+            <a href="{{ url_for(['HostsController', 'edit'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+            <a href="{{ url_for(['HostsController', 'remove'], {'id': host.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this device?');"><span class="fa fa-remove"></span> Remove</a>
+        </div>
+    {% endif %}
 {% endif %}
 <div class="btn-group" role="group">
     {% if current_user.hasAction('packages_read') %}
