@@ -7,21 +7,28 @@
     <li><a href="{{ url_for(['HostsController', 'detail'], {'id': host.id}) }}">{{ host.hostname }}</a></li>
 </ol>
 
+{% if host.virtual %}
 <div class="btn-group" role="group">
-    {% if not host.virtual %}
-    <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-dropbox"></span> Packages</a>
-    {% else %}
     <a href="{{ url_for(['HostsController', 'edit'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
     <a href="{{ url_for(['HostsController', 'remove'], {'id': host.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this device?');"><span class="fa fa-remove"></span> Remove</a>
 </div>
+{% endif %}
 <div class="btn-group" role="group">
+    {% if current_user.hasAction('packages_read') %}
+        {% if not host.virtual %}
+            <a href="{{ url_for(['PackagesController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-dropbox"></span> Packages</a>
+        {% endif %}
     {% endif %}
     <a href="{{ url_for(['HostsController', 'history'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-history"></span> Changelog</a>
-    {% if not host.virtual %}
-    <a href="{{ url_for(['StampsController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-heartbeat"></span> Stamps</a>
+    {% if current_user.hasAction('stamps_read') %}
+        {% if not host.virtual %}
+            <a href="{{ url_for(['StampsController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-heartbeat"></span> Stamps</a>
+        {% endif %}
     {% endif %}
-    <a href="{{ url_for(['ChecksController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-hand-o-right"></span> Checks</a>
-    <a href="{{ url_for(['HostsController', 'charts'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
+    {% if current_user.hasAction('checks_read') %}
+        <a href="{{ url_for(['ChecksController', 'index']) }}?host={{ host.hostname }}" class="btn btn-default"><span class="fa fa-hand-o-right"></span> Checks</a>
+        <a href="{{ url_for(['HostsController', 'charts'], {'id': host.id}) }}" class="btn btn-default"><span class="fa fa-area-chart"></span> Charts</a>
+    {% endif %}
 </div>
 
 <div class="panel panel-default">

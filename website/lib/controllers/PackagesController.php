@@ -4,6 +4,8 @@ require_once "controllers/TemplatedController.php";
 
 class PackagesController extends TemplatedController {
     public function index() {
+        $this->requireAction("packages_read");
+
         $db = connect();
 
         $selfurl = twig_url_for(["PackagesController", "index"]);
