@@ -8,7 +8,9 @@
 </ul>
 
 <div class="btn-group">
+    {% if current_user.hasAction('help_write') %}
     <a href="{{ url_for(['HelpController', 'add']) }}" class="btn btn-default"><span class="fa fa-plus"></span> Add topic</a>
+    {% endif %}
 </div>
 
 <h2>Help topics</h2>

@@ -3,9 +3,16 @@
 {% block main %}
 <h1><span class="fa fa-question-circle-o"></span> {{ topic.name }}</h1>
 
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['HelpController', 'index']) }}">Help center</a></li>
+    <li><a href="{{ url_for(['HelpController', 'topic'], {'topic': topic.url}) }}">{{ topic.name }}</a></li>
+</ol>
+
 <div class="btn-group">
-    <a href="{{ url_for(['HelpController', 'edit'], {'id': topic.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
-    <a href="{{ url_for(['HelpController', 'remove'], {'id': topic.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this topic?');"><span class="fa fa-remove"></span> Remove</a>
+    {% if current_user.hasAction('help_write') %}
+        <a href="{{ url_for(['HelpController', 'edit'], {'id': topic.id}) }}" class="btn btn-default"><span class="fa fa-edit"></span> Modify</a>
+        <a href="{{ url_for(['HelpController', 'remove'], {'id': topic.id}) }}" class="btn btn-default" onclick="return confirm('Do you really want to remove this topic?');"><span class="fa fa-remove"></span> Remove</a>
+    {% endif %}
 </div>
 
 {{ topic.text|raw }}

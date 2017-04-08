@@ -24,6 +24,8 @@ class HelpController extends TemplatedController {
     }
 
     public function add() {
+        $this->requireAction("help_write");
+
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $db = connect();
 
@@ -40,6 +42,8 @@ class HelpController extends TemplatedController {
     }
 
     public function edit($id) {
+        $this->requireAction("help_write");
+
         $db = connect();
 
         $q = $db->query("SELECT `id`, `topic_name` AS `name`, `url`, `text` FROM `help` WHERE `id` = ".escape($db, $id));
@@ -65,6 +69,8 @@ class HelpController extends TemplatedController {
     }
 
     public function remove($id) {
+        $this->requireAction("help_write");
+
         $db = connect();
 
         $db->query("DELETE FROM `topics` WHERE `id` = ".escape($db, $id));
