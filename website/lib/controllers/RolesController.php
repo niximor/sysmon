@@ -15,7 +15,7 @@ class RolesController extends TemplatedController {
 
         $order = [
             "name" => "`r`.`name`",
-            "users" => `users`
+            "users" => "`users`",
         ][$order];
 
         $direction = "ASC";
@@ -25,7 +25,7 @@ class RolesController extends TemplatedController {
 
         $q = $db->query("SELECT `r`.`id`, `r`.`name`, COUNT(`u`.`user_id`) AS `users` FROM `roles` `r`
             LEFT JOIN `user_roles` `u` ON (`u`.`role_id` = `r`.`id`)
-            GROUP BY `r`.`id` ORDER BY ".$order." ".$direction);
+            GROUP BY `r`.`id` ORDER BY ".$order." ".$direction) or fail($db->error);
 
         $roles = [];
         while ($a = $q->fetch_assoc()) {

@@ -15,8 +15,8 @@
 <table class="table table-compacted table-striped table-hover">
     <thead>
         <tr>
-            <th>User name</th>
-            <th>Last login</th>
+            <th>{{ "User name"|sorted('name', true) }}</th>
+            <th>{{ "Last login"|sorted('last_login') }}</th>
             <th class="td-shrink"></th>
         </tr>
     </thead>

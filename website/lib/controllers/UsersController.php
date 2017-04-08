@@ -8,7 +8,18 @@ class UsersController extends TemplatedController {
 
         $db = connect();
 
-        $q = $db->query("SELECT `id`, `name`, `last_login` FROM `users` ORDER BY `name` ASC");
+        $order = "name";
+        $direction = "ASC";
+
+        if (isset($_REQUEST["name"]) && in_array($_REQUEST["name"], ["name", "last_login"])) {
+            $order = $_REQUEST["name"];
+        }
+
+        if (isset($_REQUEST["direction"]) && in_array($_REQUEST["direction"], ["ASC", "DESC"])) {
+            $direction = $_REQUEST["direction"];
+        }
+
+        $q = $db->query("SELECT `id`, `name`, `last_login` FROM `users` ORDER BY `".$order."` ".$direction);
         $users = [];
         while ($a = $q->fetch_assoc()) {
             if (!is_null($a["last_login"])) {
