@@ -12,6 +12,8 @@ require_once "models/Message.php";
 
 class StampsController extends TemplatedController implements CronInterface {
     public function index() {
+        $this->requireAction("stamps_read");
+
         $db = connect();
 
         $where = [];
@@ -69,10 +71,23 @@ class StampsController extends TemplatedController implements CronInterface {
     }
 
     public function detail($id) {
+        $this->requireAction("stamps_read");
+
         $db = connect();
 
+        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`server_id`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
+        $stamp = $q->fetch_array();
+
+        if (!$stamp) {
+            throw new EntityNotFound("Stamp was not found.");
+        }
+
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $this->requireAnyAction("stamps_write", "stamps_change_host");
+
             if (isset($_POST["remove"])) {
+                $this->requireAction("stamps_write");
+
                 $db->query("DELETE FROM `stamps` WHERE `id` = ".escape($db, $id));
                 $db->commit();
 
@@ -82,10 +97,20 @@ class StampsController extends TemplatedController implements CronInterface {
                 exit;
             }
 
-            $alert_after = parse_duration($_POST["alert_after"]);
-            $server = $_POST["server"] ?? NULL;
-            if (empty($server)) {
-                $server = NULL;
+            if (isset($_POST["alert_after"])) {
+                $this->requireAction("stamps_write");
+                $alert_after = parse_duration($_POST["alert_after"]);
+            } else {
+                $alert_after = $stamp["alert_after"];
+            }
+
+            if (isset($_POST["server"])) {
+                $server = $_POST["server"] ?? NULL;
+                if (empty($server)) {
+                    $server = NULL;
+                }
+            } else {
+                $server = $stamp["server_id"];
             }
 
             $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after).", `server_id` = ".escape($db, $server)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
@@ -114,22 +139,16 @@ class StampsController extends TemplatedController implements CronInterface {
             exit;
         }
 
-
-        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`server_id`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
-        $a = $q->fetch_array();
-
-        if (!$a) {
-            throw new EntityNotFound("Stamp was not found.");
-        }
-
         return $this->renderTemplate("stamps/detail.html", [
-            "stamp" => new Stamp($a),
+            "stamp" => new Stamp($stamp),
             "servers" => $this->listServers($db),
-            "alerts" => Alert::loadLatest($db, ["stamp_id" => $a["id"]]),
+            "alerts" => Alert::loadLatest($db, ["stamp_id" => $stamp["id"]]),
         ]);
     }
 
     public function add() {
+        $this->requireAction("stamps_write");
+
         $db = connect();
 
         if ($_SERVER["REQUEST_METHOD"] == "POST") {
@@ -154,6 +173,8 @@ class StampsController extends TemplatedController implements CronInterface {
     }
 
     public function punchcard($id) {
+        $this->requireAction("stamps_read");
+
         $db = connect();
 
         $q = $db->query("SELECT

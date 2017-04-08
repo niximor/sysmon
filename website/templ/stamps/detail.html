@@ -40,16 +40,22 @@
             <div class="form-group">
                 <label class="col-sm-2 control-label">Host:</label>
                 <div class="col-sm-10">
-                    <select name="server" class="form-control">
-                        <option value=""{% if not stamp.server_id %} selected{% endif %}></option>
-                        {% for server in servers %}
-                        <option value="{{ server.id }}"{% if stamp.server_id == server.id %} selected{% endif %}>{{ server.hostname }}</option>
-                        {% endfor %}
-                    </select>
+                    {% if current_user.hasAnyAction('stamps_write', 'stamps_change_host') %}
+                        <select name="server" class="form-control">
+                            <option value=""{% if not stamp.server_id %} selected{% endif %}></option>
+                            {% for server in servers %}
+                            <option value="{{ server.id }}"{% if stamp.server_id == server.id %} selected{% endif %}>{{ server.hostname }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <p class="form-control-static">{{ stamp.hostname }}</p>
+                    {% endif %}
                 </div>
-                <div class="col-sm-10 col-sm-offset-2">
-                    <p class="help-block">Set to empty server to allow this stamp to be collected from any server. Set to host to restrict the stamp only to selected host.</p>
-                </div>
+                {% if current_user.hasAnyAction('stamps_write', 'stamps_change_host') %}
+                    <div class="col-sm-10 col-sm-offset-2">
+                        <p class="help-block">Set to empty server to allow this stamp to be collected from any server. Set to host to restrict the stamp only to selected host.</p>
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
@@ -62,17 +68,27 @@
             <div class="form-group">
                 <label class="col-sm-2 control-label">Alert after:</label>
                 <div class="col-sm-2">
-                    <input type="text" name="alert_after" value="{{ stamp.alert_after|duration('short') }}" class="form-control" />
+                    {% if current_user.hasAction('stamps_write') %}
+                        <input type="text" name="alert_after" value="{{ stamp.alert_after|duration('short') }}" class="form-control" />
+                    {% else %}
+                        <p class="form-control-static">{{ stamp.alert_after|duration('short') }}</p>
+                    {% endif %}
                 </div>
-                <div class="col-sm-10 col-sm-offset-2">
-                    <p class="help-block">Set to empty to disable stamp checking. You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
-                </div>
+                {% if current_user.hasAction('stamps_write') %}
+                    <div class="col-sm-10 col-sm-offset-2">
+                        <p class="help-block">Set to empty to disable stamp checking. You can use units such as <code>w</code> for week, <code>d</code> for day, <code>h</code> for hour, <code>m</code> for minute, <code>s</code> for second. You can also combine more units together, for example <code>1d2h</code> for 1 day and 2 hours.</p>
+                    </div>
+                {% endif %}
             </div>
 
             <div class="form-group">
                 <div class="col-sm-offset-2 col-sm-10">
+                    {% if current_user.hasAnyAction('stamps_write', 'stamps_change_host') %}
                     <button type="submit" class="btn btn-primary">Update</button>
+                    {% endif %}
+                    {% if current_user.hasAction('stamps_write') %}
                     <button type="submit" name="remove" class="btn btn-danger" onclick="return confirm('Do you really want to remove this stamp?');">Remove</button>
+                    {% endif %}
                 </div>
             </div>
         </form>
