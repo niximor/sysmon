@@ -2,6 +2,7 @@ import socket
 
 from pyasn1.modules import rfc1157
 from pyasn1.codec.ber import encoder, decoder
+from pyasn1.error import PyAsn1Error
 
 
 class SnmpException(Exception):
@@ -110,3 +111,5 @@ class SNMP:
             raise SnmpException("Hostname %s was not found." % (self.server_address[0], ))
         except socket.timeout as e:
             raise SnmpException("Timeout when talking to %s." % (self.server_address[0], ))
+        except PyAsn1Error:
+            return None

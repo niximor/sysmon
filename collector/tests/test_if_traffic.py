@@ -69,7 +69,7 @@ class TestIfTraffic(TestCase):
     def test_existing_iface(self):
         out, err = self.popen({"INTERFACE": "lo"})
         self.assertEqual(err, "")
-        self.assertRegexpMatches(out, r"^rx_bytes=[0-9]+\ntx_bytes=[0-9]+\nrx_packets=[0-9]+\ntx_packets=[0-9]+\n$")
+        self.assertRegexpMatches(out, r"^rx_bytes=[0-9]+\ntx_bytes=[0-9]+\nrx_packets=[0-9]+\ntx_packets=[0-9]+\nrx_errors=[0-9]+\ntx_errors=[0-9]+\n$")
 
     def test_snmp_bad_params(self):
         out, err = self.popen({"USE_SNMP": "1"})

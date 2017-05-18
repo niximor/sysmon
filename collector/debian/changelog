@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.2.1) xenial; urgency=medium
+
+  * Interface traffic now supports errors and alerts when interface goes down.
+
+ -- Michal Kuchta <niximor@gmail.com>  Thu, 18 May 2017 14:44:40 +0200
+
 gcm-sysmon-collector (2.2.0) xenial; urgency=medium
 
   * SNMP checks supported.
