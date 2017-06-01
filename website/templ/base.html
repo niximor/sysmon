@@ -66,6 +66,12 @@
                         {% if current_user.hasAction('roles_read') %}
                             <li><a href="{{ url_for(['RolesController', 'index']) }}"><span class="fa fa-fw fa-cubes"></span> Roles</a></li>
                         {% endif %}
+                        {% if current_user.hasAction('system_config_read') %}
+                            {% if current_user.hasAnyAction('alert_templates_read', 'check_charts_read', 'check_types_read', 'users_read', 'actions_read', 'roles_read') %}
+                                <li class="divider" role="divider"></li>
+                            {% endif %}
+                            <li><a href="{{ url_for(['SettingsController', 'config']) }}"><span class="fa fa-fw fa-gear"></span> Configuration</a></li>
+                        {% endif %}
                         <li class="divider" role="divider"></li>
                         <li><a href="{{ url_for(['HelpController', 'index']) }}"><span class="fa fa-fw fa-question-circle-o"></span> Help</a></li>
                     </ul>

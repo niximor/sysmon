@@ -6,6 +6,8 @@ require_once "models/Message.php";
 require_once "models/FormSave.php";
 require_once "models/CurrentUser.php";
 
+require_once "util/Email.php";
+
 class ProfileController extends TemplatedController {
     public function index() {
         $db = connect();
@@ -114,5 +116,89 @@ class ProfileController extends TemplatedController {
             "formerrors" => $fs->getErrors(),
             "formsave" => $fs->save()
         ]);
+    }
+
+    public function notifications() {
+        $fs = new FormSave($_REQUEST["formsave"] ?? NULL);
+
+        $notifications = [];
+
+        $db = connect();
+        $q = $db->query("SELECT `type`, `enabled`, `params` FROM `notification_settings` WHERE `user_id` = ".escape($db, CurrentUser::ID())) or fail($db->error);
+        while ($a = $q->fetch_assoc()) {
+            $notifications[$a["type"]] = array_merge(["enabled" => (bool)$a["enabled"]], (array)json_decode($a["params"]));
+        }
+
+        if ($_SERVER["REQUEST_METHOD"] == "POST") {
+            $this->save_notification_settings($db, $fs->getValue("xmpp"), $fs, "xmpp");
+            $this->save_notification_settings($db, $fs->getValue("email"), $fs, "email");
+
+            if ($fs->isValid()) {
+                $db->commit();
+                Message::create(Message::SUCCESS, "Notification settings were successfully saved.");
+                header("Location: ".twig_url_for(['ProfileController', 'notifications']));
+            } else {
+                header("Location: ".twig_url_for(['ProfileController', 'notifications'])."?formsave=".$fs->save());
+                exit;
+            }
+        }
+
+        return $this->renderTemplate("profile/notifications.html", [
+            "form" => $fs->getValues(),
+            "formerrors" => $fs->getErrors(),
+            "formsave" => $fs->save(),
+            "notifications" => $notifications
+        ]);
+    }
+
+    protected function save_notification_settings($db, $n, $fs, $type) {
+        $enabled = $n["enabled"] ?? false;
+        $params = [];
+
+        // Validate fields by type.
+        switch ($type) {
+            case "xmpp":
+                if ($enabled) {
+                    if (!isset($n["jid"]) || empty($n["jid"])) {
+                        $fs->addError($type."[jid]", "Field <strong>JID</strong> must be filled in.");
+
+                    // source: https://stackoverflow.com/questions/1351041/what-is-the-regular-expression-for-validating-jabber-id/1406200
+                    } elseif (!preg_match("|^(?:([^@/<>'\"]+)@)?([^@/<>'\"]+)(?:/([^<>'\"]*))?$|", $n["jid"])) {
+                        $fs->addError($type."[jid]", "Field <strong>JID</strong> must contain valid JID.");
+                    }
+                }
+                $params["jid"] = $n["jid"];
+                break;
+
+            case "email":
+                if ($enabled) {
+                    if (!isset($n["address"]) || empty($n["address"])) {
+                        $fs->addError($type."[address]", "Field <strong>Address</strong> must be filled in.");
+                    }
+
+                    try {
+                        $n["address"] = Email::validate($n["address"]);
+                    } catch (EmailValidationError $e) {
+                        $fs->addError($type."[address]", "Field <strong>Address</strong> must contain valid email address.");
+                    }
+                }
+
+                $params["address"] = $n["address"];
+                break;
+        }
+
+        if (!$fs->isValid()) {
+            return;
+        }
+
+        $q = $db->query("SELECT `id` FROM `notification_settings` WHERE `user_id` = ".escape($db, CurrentUser::ID())." AND `type` = ".escape($db, $type)) or fail($db->error);
+        if ($a = $q->fetch_assoc()) {
+            $db->query("UPDATE `notification_settings`
+                SET `enabled` = ".escape($db, $enabled).", `params` = ".escape($db, json_encode($params))."
+                WHERE `id` = ".escape($db, $a["id"])) or fail($db->error);
+        } else {
+            $db->query("INSERT INTO `notification_settings` (`user_id`, `type`, `enabled`, `params`)
+                VALUES (".escape($db, CurrentUser::ID()).", ".escape($db, $type).", ".escape($db, $enabled).", ".escape($db, json_encode($params)).")") or fail($db->error);
+        }
     }
 }

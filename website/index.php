@@ -115,6 +115,10 @@ if (Session::get("user_id")) {
     $router->bind("/profile", array("ProfileController", "index"));
     $router->bind("/profile/revoke/<session>", array("ProfileController", "revoke"));
     $router->bind("/profile/change-password", array("ProfileController", "change_password"));
+    $router->bind("/profile/notifications", array("ProfileController", "notifications"));
+
+    require_once "controllers/SettingsController.php";
+    $router->bind("/settings/config", array("SettingsController", "config"));
 
     require_once "controllers/LoginController.php";
     $router->bind("/logout", array("LoginController", "logout"));

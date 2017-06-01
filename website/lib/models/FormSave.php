@@ -2,11 +2,14 @@
 
 class FormSave {
     protected $data = [];
+    protected $clearErrors = false;
 
     public function __construct($code = NULL) {
         if (!is_null($code)) {
             $this->load($code);
         }
+
+        $this->clearErrors = true;
 
         foreach ($_POST as $key => $val) {
             $this->data[$key] = [
@@ -62,6 +65,16 @@ class FormSave {
     }
 
     public function addError($item, $error) {
+        if ($this->clearErrors) {
+            $this->clearErrors = false;
+
+            foreach ($this->data as &$i) {
+                if (!empty($i["errors"])) {
+                    $i["errors"] = [];
+                }
+            }
+        }
+
         if (!isset($this->data[$item])) {
             $this->data[$item] = [
                 "value" => NULL,

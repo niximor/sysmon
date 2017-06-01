@@ -9,18 +9,12 @@ require_once "lib/common.php";
 
 require_once "controllers/HostsController.php";
 require_once "controllers/StampsController.php";
+require_once "controllers/AlertsController.php";
 
 require_once "models/Session.php";
 
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
-
-use Fabiang\Xmpp\Options;
-use Fabiang\Xmpp\Client;
-use Fabiang\Xmpp\Protocol\Message;
-
 $modules = [
-    "HostsController", "StampsController"
+    "HostsController", "StampsController", "AlertsController"
 ];
 
 $db = connect();
@@ -32,89 +26,6 @@ try {
     }
 
     Session::cleanup();
-
-    // Send XMPP alerts.
-    $q = $db->query("SELECT
-        `a`.`id`,
-        `a`.`server_id`,
-        `a`.`check_id`,
-        `a`.`stamp_id`,
-        `a`.`timestamp`,
-        `a`.`until`,
-        `a`.`type`,
-        `a`.`data`,
-        `a`.`active`,
-        `s`.`hostname`,
-        `ch`.`name` AS `check`,
-        `st`.`stamp` AS `stamp`
-        FROM `alerts` `a`
-        LEFT JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
-        LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
-        LEFT JOIN `stamps` `st` ON (`st`.`id` = `a`.`stamp_id`)
-        WHERE `sent` = 0");
-
-    $first = true;
-    $client = NULL;
-
-    $handled = [];
-
-    while ($a = $q->fetch_array()) {
-        if ($first) {
-            $logger = new Logger('xmpp');
-            $logger->pushHandler(new StreamHandler('php://output', Logger::DEBUG));
-
-            $options = new Options($config["xmpp-host"]);
-            $options->setUsername($config["xmpp-user"])->setPassword($config["xmpp-password"])->setTo($config["xmpp-domain"]);
-
-            $client = new Client($options);
-            $client->connect();
-
-            $first = false;
-        }
-
-        $alert = new Alert($a);
-
-        $type = "ALERT";
-        if ($alert->active == 0) {
-            $type = "RECOVER";
-        }
-
-
-        $msg_text = "[".$type."]\n";
-        if ($alert->stamp) {
-            $msg_text .= "Stamp: ".$alert->stamp."\n";
-        }
-
-        if ($alert->check) {
-            $msg_text .= "Check: ".$alert->check."\n";
-        }
-
-        if ($alert->hostname) {
-            $msg_text .= "Host: ".$alert->hostname."\n";
-        }
-
-        $msg_text .= "Alert: ".strip_tags($alert->getMessage());
-
-        $msg = new Message();
-        $msg->setMessage($msg_text);
-        $msg->setTo($config["xmpp-target"]);
-
-        $client->send($msg);
-        usleep(200000); // Seems like XMPP delivers only one message, when multiple are sent during short period. This should fix it.
-
-        $handled[] = $a["id"];
-    }
-
-    if (!is_null($client)) {
-        $client->disconnect();
-    }
-
-    if (!empty($handled)) {
-        $db->query("UPDATE `alerts` SET `sent` = 1 WHERE `id` IN (".implode(",", $handled).")");
-    }
-
-    $db->commit();
-
     Stamp::put("sysmon_cron");
 } catch (Throwable $e) {
     $db->rollback();

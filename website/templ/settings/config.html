@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}
+Configuration
+{% endblock %}
+{% block main %}
+<h1><span class="fa fa-gear"></span> Configuration</h1>
+
+<ol class="breadcrumb">
+    <li>Settings</li>
+    <li><a href="{{ url_for(['SettingsController', 'config']) }}">Configuration</a></li>
+</ol>
+
+
+<div class="panel panel-default">
+    <div class="panel-heading clearfix">
+        <h2 class="panel-title">Configuration</h2>
+    </div>
+    <div class="panel-body">
+        {% if current_user.hasAction('system_config_write') %}
+        <form action="{{ url_for(['SettingsController', 'config']) }}" class="form-horizontal" method="post">
+        {% endif %}
+
+        {% for item in config %}
+            <div class="form-group">
+                <label class="col-sm-2 control-label" for="config_{{ item.name }}">{{ item.name }}</label>
+                <div class="col-sm-10">
+                    {% if current_user.hasAction('system_config_write') %}
+                        {% if item.type in ['string', 'number', 'password'] %}
+                            <input type="text" name="config[{{ item.name }}]" value="{{ item.data }}" class="form-control" id="config_{{ item.name }}" />
+                        {% elseif item.type == 'template' %}
+                            <textarea name="config[{{ item.name }}]" class="form-control" id="config_{{ item.name }}">{{ item.data }}</textarea>
+                        {% elseif item.type == 'switch' %}
+                            <input type="hidden" name="config[{{ item.name }}]" value="0" /><input type="checkbox" name="config[{{ item.name }}]" value="1" class="form-control" id="config_{{ item.name }}" />
+                        {% else %}
+                            <p class="form-control-static">- Unknown item type -</p>
+                        {% endif %}
+                    {% else %}
+                        <p class="form-control-static">
+                        {% if item.type in ['string', 'number'] %}
+                            {{ item.data }}
+                        {% elseif item.type == 'password' %}
+                            ***
+                        {% elseif item.type == 'template' %}
+                            <code>{{ item.data|nl2br }}</code>
+                        {% elseif item.type == 'switch' %}
+                            {% if item.data %}
+                                ON
+                            {% else %}
+                                OFF
+                            {% endif %}
+                        {% else %}
+                            - Unknown item type -
+                        {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+
+        {% if current_user.hasAction('system_config_write') %}
+            <div class="form-group">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" value="Save" class="btn btn-primary" />
+                </div>
+            </div>
+        </form>
+        {% endif %}
+</div>
+
+{% endblock %}

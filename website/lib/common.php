@@ -26,6 +26,16 @@ function connect() {
     return $db;
 }
 
+function load_db_config() {
+    $db = connect();
+    $q = $db->query("SELECT `name`, `data` FROM `config`") or fail($db->error);
+
+    while ($a = $q->fetch_assoc()) {
+        $GLOBALS["config"][$a["name"]] = $a["data"];
+    }
+}
+load_db_config();
+
 function format_duration($seconds, $type = "long") {
     switch ($type) {
         case "long":

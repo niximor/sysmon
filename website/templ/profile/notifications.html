@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}
+Notifications
+{% endblock %}
+{% block main %}
+<h1><span class="fa fa-user"></span> {{ current_user.username }}</h1>
+
+<ol class="breadcrumb">
+    <li><a href="{{ url_for(['ProfileController', 'index']) }}">Profile</a></li>
+    <li><a href="{{ url_for(['ProfileController', 'notifications']) }}">Notifications</a></li>
+</ol>
+
+{% import "form_macros.html" as fm %}
+
+<form action="{{ url_for(['ProfileController', 'notifications']) }}" method="post" class="form form-horizontal">
+    <input type="hidden" name="formsave" value="{{ formsave }}" />
+
+    <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+            <h3 class="panel-title">XMPP / Jabber</h3>
+        </div>
+
+        <div class="panel-body">
+            {{ fm.checkbox(formerrors, 'xmpp[enabled]', 'Enabled', form.xmpp.enabled|default(notifications.xmpp.enabled)) }}
+            {{ fm.input(formerrors, 'xmpp[jid]', 'JID', form.xmpp.jid|default(notifications.xmpp.jid)) }}
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+            <h3 class="panel-title">E-mail</h3>
+        </div>
+
+        <div class="panel-body">
+            {{ fm.checkbox(formerrors, 'email[enabled]', 'Enabled', form.email.enabled|default(notifications.email.enabled)) }}
+            {{ fm.input(formerrors, 'email[address]', 'Address', form.email.address|default(notifications.email.address)) }}
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-body">
+            <div class="form-group" style="margin-bottom: 0">
+                <div class="col-sm-10 col-sm-offset-2">
+                    <input type="submit" class="btn btn-primary" value="Save" />
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock %}
