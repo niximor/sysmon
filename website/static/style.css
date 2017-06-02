@@ -29,3 +29,5 @@ a.box:hover { color: initial; }
 .tbody-th-punch { vertical-align: middle !important; }
 .td-punch circle { fill: #333; }
 .th-punch { text-align: center; }
+
+footer { padding-bottom: 2em; }

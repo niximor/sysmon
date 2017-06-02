@@ -14,6 +14,7 @@ class TwigEnv {
         $this->twig->addFilter(new Twig_Filter("get_class", "get_class"));
 
         $this->twig->addFunction(new Twig_Function("url_for", "twig_url_for"));
+        $this->twig->addFunction(new Twig_Function("microtime", array($this, "twig_microtime")));
 
         $this->twig->addGlobal("current_user", CurrentUser::i());
         $this->twig->addGlobal("controller", get_class($this));
@@ -22,6 +23,7 @@ class TwigEnv {
         $this->twig->addGlobal("post", $_POST);
         $this->twig->addGlobal("total_alerts_count", $this->countAlerts());
         $this->twig->addGlobal("messages", Message::get());
+        $this->twig->addGlobal("tm_start", $GLOBALS["tm_start"]);
     }
 
     public function countAlerts() {
@@ -86,5 +88,9 @@ class TwigEnv {
         } else {
             return "<a href=\"".$url."\" class=\"sorted\">".$val." <span class=\"fa fa-sort\"></span></a>";
         }
+    }
+
+    public static function twig_microtime() {
+        return microtime(true);
     }
 }

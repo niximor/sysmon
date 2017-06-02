@@ -96,6 +96,7 @@
     {% block main %}
     {% endblock %}
 </div>
+
 <div class="hidden" id="help">
     <div class="panel panel-default">
         <div class="panel-heading clearfix">
@@ -109,4 +110,17 @@
         </div>
     </div>
 </div>
+
+<footer>
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-6">
+                <a href="https://github.com/niximor/sysmon">SYSmon</a><br />
+            </div>
+            <div class="col-xs-6">
+                <div class="text-muted text-right">Rendered in {{ (microtime() - tm_start)|round(3) }}s.</div>
+            </div>
+        </div>
+    </div>
+</footer>
 {% endblock %}
