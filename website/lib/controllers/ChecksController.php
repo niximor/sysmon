@@ -1225,26 +1225,44 @@ class ChecksController extends TemplatedController {
             $server_ids[] = escape($db, $a["server_id"]);
         }
 
+        // The check is selected when previous listing was before `interval` seconds,
+        // and if the results from check has arrived within the given interval.
+        // Also, there is a 15 minute safe period, when the check is rescheduled, to avoid
+        // stucking check when results did not arrived within that interval.
+        // So possible flooding of agent could still occur, but it is much less probable.
+
+        // TODO: When the safe interval is hitted, alert should be raised.
         $q = $db->query("SELECT
                 `ch`.`id`,
+                `ch`.`server_id`,
                 `ch`.`name`,
+                `ch`.`last_check`,
                 `t`.`identifier` AS `type`,
                 `ch`.`params`,
                 `d`.`hostname` AS `snmp_hostname`,
                 `d`.`port` AS `snmp_port`,
                 `d`.`version` AS `snmp_version`,
-                `d`.`community` AS `snmp_community`
+                `d`.`community` AS `snmp_community`,
+                (DATE_ADD(`ch`.`last_listed`, INTERVAL GREATEST(LEAST(900,`interval`), 5*`interval`) SECOND) <= NOW()) AS `is_safe_period`
             FROM `checks` `ch`
             JOIN `servers` `s` ON (`s`.`id` = `ch`.`server_id`)
             LEFT JOIN `snmp_devices` `d` ON (`d`.`server_id` = `s`.`id`)
             JOIN `check_types` `t` ON (`t`.`id` = `ch`.`type_id`)
             WHERE `s`.`id` IN (".implode(",", $server_ids).")
                 AND `ch`.`enabled` = 1
-                AND (`ch`.`last_check` IS NULL OR DATE_ADD(`ch`.`last_check`, INTERVAL (`interval` - 60) SECOND) <= NOW())
+                AND (
+                    `ch`.`last_listed` IS NULL OR (
+                        (
+                            `ch`.`last_listed` <= `ch`.`last_check`
+                            OR DATE_ADD(`ch`.`last_listed`, INTERVAL GREATEST(LEAST(900, `interval`), 5*`interval`) SECOND) <= NOW()
+                        ) AND DATE_ADD(`ch`.`last_listed`, INTERVAL (`interval` - 60) SECOND) <= NOW()
+                    )
+                )
             ") or fail($db->error);
 
         $out = array();
 
+        $ids = [];
         while ($a = $q->fetch_assoc()) {
             $check = [
                 "id" => $a["id"],
@@ -1252,6 +1270,8 @@ class ChecksController extends TemplatedController {
                 "type" => $a["type"],
                 "params" => json_decode($a["params"]),
             ];
+
+            $ids[] = escape($db, $a["id"]);
 
             if (!is_null($a["snmp_hostname"])) {
                 $check["snmp"] = [
@@ -1262,7 +1282,33 @@ class ChecksController extends TemplatedController {
                 ];
             }
 
+            if ($a["is_safe_period"]) {
+                $q = $db->query("SELECT `id`, `type` FROM `alerts` WHERE `check_id` = ".escape($db, $a["id"])." AND `active` = 1 AND `type` = 'check_stalled'") or fail($db->error);
+
+                if (!$q->fetch_assoc()) {
+                    $db->query("INSERT INTO `alerts` (`server_id`, `check_id`, `timestamp`, `type`, `data`, `active`) VALUES (
+                        ".escape($db, $a["server_id"]).",
+                        ".escape($db, $a["id"]).",
+                        NOW(),
+                        'check_stalled',
+                        ".escape($db, json_encode(["last_check" => $a["last_check"]])).",
+                        1
+                    )") or fail($db->error);
+                }
+            } else {
+                // Dismiss the alert if check updated in the meantime.
+                $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `check_id` = ".escape($db, $a["id"])." AND `active` = 1 AND `type` = 'check_stalled'") or fail($db->error);
+            }
+
             $out[] = $check;
+        }
+
+        // Do not list the check multiple times if the check was not completed in the 60s query period. Only list
+        // newly expired checks. This allows checks to run more than 60 seconds, without flooding the agent
+        // with repeated requests for the same checks.
+        if (!empty($ids)) {
+            $db->query("UPDATE `checks` SET `last_listed` = NOW() WHERE `id` IN (".implode(",", $ids).")") or fail($db->error);
+            $db->commit();
         }
 
         header("Content-Type: text/json");
