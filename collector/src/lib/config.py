@@ -9,7 +9,7 @@ import sys
 
 
 class AppConfig:
-    def __init__(self, options=None):
+    def __init__(self, options=None, args=None):
         """
         :param options: Tuple containing (option_name, option_type, option_description) with options
         that the program accepts.
@@ -25,7 +25,7 @@ class AppConfig:
         config = SafeConfigParser()
 
         parser = ArgumentParser()
-        parser.add_argument("-f", "--config", help="Config file location")
+        parser.add_argument("-f", "--config", help="Config file location", default="/etc/gcm-sysmon/sysmon.cfg")
 
         if options is not None:
             for option_name, option_type, option_description in options:
@@ -34,6 +34,13 @@ class AppConfig:
                     parser.add_argument("--no-%s" % (option_name, ), action="store_const", const=False, dest=option_name, help=option_description)
                 else:
                     parser.add_argument("--%s" % (option_name, ), type=option_type, help=option_description)
+
+        if args is not None:
+            for arg in args:
+                name = arg["name"]
+                del arg["name"]
+
+                parser.add_argument(name, **arg)
 
         args = parser.parse_args()
 
@@ -48,10 +55,7 @@ class AppConfig:
                     val = config.get(section, option_name)
                     self.options[option_name] = self._convert_type(val, option_type)
 
-                except NoOptionError as e:
-                    pass
-
-                except NoSectionError as e:
+                except (NoOptionError, NoSectionError) as e:
                     try:
                         val = config.get("DEFAULT", option_name)
                         self.options[option_name] = self._convert_type(val, option_type)
@@ -65,6 +69,10 @@ class AppConfig:
                 self.options[key] = val
 
         self.setup_logging()
+
+        logging.debug("Configuration dump:")
+        for option, value in self.options.iteritems():
+            logging.debug("    %s=%s" % (option, value))
 
     def _convert_type(self, val, option_type):
         if option_type == bool:
@@ -131,3 +139,8 @@ class AppConfig:
 
     def __getattr__(self, name):
         return self.options[name]
+
+    @staticmethod
+    def argument(name, **kwargs):
+        kwargs["name"] = name
+        return kwargs

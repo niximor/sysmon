@@ -1,3 +1,9 @@
+gcm-sysmon-collector (2.2.2) xenial; urgency=medium
+
+  * sysmon-stamp utility to writing stamp.
+
+ -- Michal Kuchta <niximor@gmail.com>  Sun, 22 Oct 2017 11:13:19 +0200
+
 gcm-sysmon-collector (2.2.1) xenial; urgency=medium
 
   * Interface traffic now supports errors and alerts when interface goes down.
