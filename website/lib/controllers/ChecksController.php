@@ -398,6 +398,10 @@ class ChecksController extends TemplatedController {
 
         $type_id = $a["check_type_id"];
 
+        $q = $db->query("SELECT `interval` FROM `checks` WHERE `id` = ".escape($db, $id));
+        $i = $q->fetch_array();
+        $check_interval = $i["interval"];
+
         $q = $db->query("SELECT
                     `r`.`id`,
                     `r`.`name`,
@@ -503,6 +507,8 @@ class ChecksController extends TemplatedController {
 
             // Fill in missing readings
             $compute = [];
+            $last = NULL;
+            $last_time = NULL;
             foreach ($readings as $reading) {
                 for ($t = $from; $t <= $now; $t += $seconds) {
                     if (!isset($series[$t])) {
@@ -510,7 +516,13 @@ class ChecksController extends TemplatedController {
                     }
 
                     if (!isset($series[$t][(int)$reading["id"]])) {
-                        $series[$t][(int)$reading["id"]] = NULL;
+                        // For higher check intervals than chart interval,
+                        // duplicate reading value up to interval time.
+                        // If check did not run more than one interval, fill NULL.
+                        $series[$t][(int)$reading["id"]] = (($t - $check_interval) <= $last_time)?$last:NULL;
+                    } else {
+                        $last = $series[$t][(int)$reading["id"]];
+                        $last_time = $t;
                     }
                 }
 
@@ -539,6 +551,7 @@ class ChecksController extends TemplatedController {
 
         $statistics = [];
 
+        // Compute statistics for readings, correctly handling missing values.
         foreach ($series as $time => $values) {
             foreach ($values as $reading => $value) {
                 if (!isset($statistics[$reading])) {
@@ -551,8 +564,8 @@ class ChecksController extends TemplatedController {
                     ];
                 } elseif (!is_null($value)) {
                     $statistics[$reading]["cur"] = $value;
-                    $statistics[$reading]["min"] = min($statistics[$reading]["min"], $value);
-                    $statistics[$reading]["max"] = max($statistics[$reading]["max"], $value);
+                    $statistics[$reading]["min"] = (!is_null($statistics[$reading]["min"]))?min($statistics[$reading]["min"], $value):$value;
+                    $statistics[$reading]["max"] = (!is_null($statistics[$reading]["max"]))?max($statistics[$reading]["max"], $value):$value;
                     ++$statistics[$reading]["cnt"];
                     $statistics[$reading]["avg"] += $value;
                 }
@@ -1282,7 +1295,7 @@ class ChecksController extends TemplatedController {
                 ];
             }
 
-            if ($a["is_safe_period"]) {
+            /*if ($a["is_safe_period"]) {
                 $q = $db->query("SELECT `id`, `type` FROM `alerts` WHERE `check_id` = ".escape($db, $a["id"])." AND `active` = 1 AND `type` = 'check_stalled'") or fail($db->error);
 
                 if (!$q->fetch_assoc()) {
@@ -1298,7 +1311,7 @@ class ChecksController extends TemplatedController {
             } else {
                 // Dismiss the alert if check updated in the meantime.
                 $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0, `until` = NOW() WHERE `check_id` = ".escape($db, $a["id"])." AND `active` = 1 AND `type` = 'check_stalled'") or fail($db->error);
-            }
+            }*/
 
             $out[] = $check;
         }

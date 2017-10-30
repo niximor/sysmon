@@ -26,7 +26,7 @@ function divide(value, division, units) {
 
 var formatters = {
     "raw": function(val, axis) {
-        return val.toFixed(axis.tickDecimals);
+        return (val != null)?val.toFixed(axis.tickDecimals):val;
     },
 
     "si": function(val, axis) {
