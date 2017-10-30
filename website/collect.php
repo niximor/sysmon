@@ -67,7 +67,7 @@ function update_server(mysqli $db, int $id = NULL, string $hostname, string $dis
 
 		return $a["id"];
 	} elseif (is_null($id)) {
-		$db->query("INSERT INTO `servers` (`hostname`, `distribution`, `version`, `kernel`, `last_check`, `uptime`) VALUES (".$hostname.", ".$distribution.", ".$version.", ".$kernel.", NOW(), ".$ip.", ".$db_uptime.")") or fail($db->error);
+		$db->query("INSERT INTO `servers` (`hostname`, `distribution`, `version`, `kernel`, `last_check`, `ip`, `uptime`) VALUES (".$hostname.", ".$distribution.", ".$version.", ".$kernel.", NOW(), ".$ip.", ".$db_uptime.")") or fail($db->error);
 		return $db->insert_id;
 	}
 }
