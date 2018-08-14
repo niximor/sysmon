@@ -93,7 +93,7 @@
 
             <tbody>
                 {% for alert in alerts %}
-                    <tr{% if alert.active %} class="danger"{% endif %}>
+                    <tr{% if alert.active and not alert.muted %} class="danger"{% endif %}>
                         <td class="text-nowrap">{{ alert.timestamp|datetime("Y-m-d G:i:s") }}</td>
                         <td class="text-nowrap">
                             {% if alert.check %}
@@ -107,7 +107,8 @@
                         <td>{{ alert.getMessage()|raw }}</td>
                         <td class="td-shrink">
                             {% if alert.active %}
-                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}">Dismiss</a>
+                            <a class="btn btn-success btn-xs" href="{{ url_for(['OverviewController', 'resolve'], {'id': alert.id}) }}">Resolve</a>
+                            <a class="btn btn-danger btn-xs" href="{{ url_for(['OverviewController', 'dismiss'], {'id': alert.id}) }}">Mute</a>
                             {% endif %}
                         </td>
                     </tr>

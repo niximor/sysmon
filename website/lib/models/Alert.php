@@ -34,6 +34,7 @@ class Alert {
             $this->data = (isset($data["data"]))?json_decode($data["data"]):NULL;
             $this->active = $data["active"] ?? NULL;
             $this->sent = $data["sent"] ?? NULL;
+            $this->muted = $data["muted"] ?? NULL;
 
             // Foreign properties
             $this->hostname = $data["hostname"] ?? NULL;
@@ -77,7 +78,7 @@ class Alert {
 
         $where = [];
 
-        $where[] = "(`a`.`active` = 1 OR `a`.`timestamp` >= DATE_ADD(NOW(), INTERVAL -7 DAY))";
+        $where[] = "((`a`.`active` = 1 AND `a`.`muted` = 0) OR `a`.`timestamp` >= DATE_ADD(NOW(), INTERVAL -7 DAY))";
 
         if (!is_null($options["server_id"])) {
             $where[] = "`a`.`server_id` = ".escape($db, $options["server_id"]);
@@ -117,6 +118,7 @@ class Alert {
             `a`.`data`,
             `a`.`active`,
             `a`.`until`,
+            `a`.`muted`,
             `ch`.`name` AS `check`,
             `st`.`stamp` AS `stamp`
             FROM `alerts` `a`
@@ -137,7 +139,7 @@ class Alert {
             }
         }
 
-        $where[0] = "`a`.`active` = 1";
+        $where[0] = "`a`.`active` = 1 AND `a`.`muted` = 0";
 
         if (!is_null($lowest_id)) {
             $where[] = "`a`.`id` < ".escape($db, $lowest_id);
@@ -153,6 +155,7 @@ class Alert {
             `a`.`data`,
             `a`.`active`,
             `a`.`until`,
+            `a`.`muted`,
             `ch`.`name` AS `check`,
             `st`.`stamp` AS `stamp`
             FROM `alerts` `a`

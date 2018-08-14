@@ -1403,6 +1403,17 @@ class ChecksController extends TemplatedController {
                 $to_insert[] = "(".escape($db, $id).", ".$reading_mapping[$check["type_id"]][$key].", NOW(), ".escape($db, $val).")";
             }
 
+            $mq = mqconn();
+            $chan = $mq->channel();
+
+            $msg = new \PhpAmqpLib\Message\AMQPMessage(json_encode([
+                "check" => $id,
+                "server" => $server_id,
+                "readings" => $readings
+            ]));
+
+            $chan->basic_publish($msg, "incomming_event", "reading.".$id);
+
             if (!empty($to_insert)) {
                 $db->query("INSERT INTO `readings_daily` (`check_id`, `reading_id`, `datetime`, `value`) VALUES ".implode(",", $to_insert));
             }

@@ -18,7 +18,7 @@ class StampsController extends TemplatedController implements CronInterface {
 
         $where = [];
 
-        $query = "SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after`, DATE_ADD(`s`.`timestamp`, INTERVAL `s`.`alert_after` SECOND) < NOW() AS `in_alert` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`)";
+        $query = "SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`timestamp`, `s`.`alert_after`, (DATE_ADD(`s`.`timestamp`, INTERVAL `s`.`alert_after` SECOND) < NOW() AND `s`.`status_id` = 1) AS `in_alert`, `s`.`status_id` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`)";
 
         if (isset($_REQUEST["host"]) && !empty($_REQUEST["host"])) {
             $where[] = "`sv`.`hostname` LIKE '".$db->real_escape_string(strtr($_REQUEST["host"], array("%" => "%%", "_" => "__", "*" => "%", "?" => "_")))."'";
@@ -75,7 +75,7 @@ class StampsController extends TemplatedController implements CronInterface {
 
         $db = connect();
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`server_id`, `s`.`timestamp`, `s`.`alert_after` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
+        $q = $db->query("SELECT `s`.`id`, `s`.`stamp`, `sv`.`hostname`, `s`.`server_id`, `s`.`timestamp`, `s`.`alert_after`, `s`.`status_id` FROM `stamps` `s` LEFT JOIN `servers` `sv` ON (`s`.`server_id` = `sv`.`id`) WHERE `s`.`id` = ".escape($db, $id)." ORDER BY `s`.`stamp` ASC") or fail($db->error);
         $stamp = $q->fetch_array();
 
         if (!$stamp) {
@@ -113,7 +113,13 @@ class StampsController extends TemplatedController implements CronInterface {
                 $server = $stamp["server_id"];
             }
 
-            $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after).", `server_id` = ".escape($db, $server)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
+            if (isset($_POST["pause"])) {
+                $status_id = ($stamp["status_id"] == 1) ? 2 : 1;
+            } else {
+                $status_id = $stamp["status_id"];
+            }
+
+            $db->query("UPDATE `stamps` SET `alert_after` = ".escape($db, $alert_after).", `server_id` = ".escape($db, $server).", `status_id` = ".escape($db, $status_id)." WHERE `id` = ".escape($db, $id)) or fail($db->error);
 
             // Dismiss alerts if the stamp is now valid.
             $q = $db->query("SELECT `timestamp`, `server_id` FROM `stamps` WHERE `id` = ".escape($db, $id)) or fail($db->error);
@@ -281,7 +287,7 @@ class StampsController extends TemplatedController implements CronInterface {
         }
 
         // Select current stamps that fails.
-        $q = $db->query("SELECT `id`, `stamp`, `server_id`, `timestamp` FROM `stamps` WHERE `alert_after` IS NOT NULL AND DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW()") or fail($db->error);
+        $q = $db->query("SELECT `id`, `stamp`, `server_id`, `timestamp` FROM `stamps` WHERE `alert_after` IS NOT NULL AND DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW() AND `status_id` = 1") or fail($db->error);
         while ($a = $q->fetch_array()) {
             // Is the stamp already alerted?
             $found = false;

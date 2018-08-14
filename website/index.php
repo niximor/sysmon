@@ -35,6 +35,7 @@ if (Session::get("user_id")) {
     require_once "controllers/OverviewController.php";
     $router->bind("/", array("OverviewController", "index"));
     $router->bind("/alerts/dismiss/<id>", array("OverviewController", "dismiss"));
+    $router->bind("/alerts/resolve/<id>", array("OverviewController", "resolve"));
 
     $router->bind("/hosts", array("HostsController", "index"));
     $router->bind("/hosts/add", array("HostsController", "add"));

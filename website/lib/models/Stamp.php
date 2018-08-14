@@ -9,6 +9,7 @@ class Stamp {
     public $ago;
     public $alert_after;
     public $server_id;
+    public $status_id;
 
     public $hostname;
     public $in_alert;
@@ -20,6 +21,7 @@ class Stamp {
             $this->server_id = $data["server_id"] ?? NULL;
             $this->timestamp = (isset($data["timestamp"]))?DateTime::createFromFormat("Y-m-d G:i:s", $data["timestamp"]):NULL;
             $this->alert_after = $data["alert_after"] ?? NULL;
+            $this->status_id = $data["status_id"] ?? NULL;
 
             $this->hostname = $data["hostname"] ?? NULL;
 

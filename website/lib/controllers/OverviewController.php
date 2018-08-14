@@ -15,12 +15,28 @@ class OverviewController extends TemplatedController {
         ]);
     }
 
-    public function dismiss($id) {
+    public function resolve($id) {
         $db = connect();
 
         $db->query("UPDATE `alerts` SET `active` = 0, `sent` = 0 WHERE `id` = ".escape($db, $id)." AND `active` > 0");
         if ($db->affected_rows > 0) {
-            Message::create(Message::SUCCESS, "Alert has been dismissed.");
+            Message::create(Message::SUCCESS, "Alert has been resolved.");
+        }
+        $db->commit();
+
+        if (isset($_REQUEST["back"])) {
+            header("Location: ".$_REQUEST["back"]);
+        } else {
+            header("Location: ".twig_url_for(["OverviewController", "index"]));
+        }
+    }
+
+    public function dismiss($id) {
+        $db = connect();
+
+        $db->query("UPDATE `alerts` SET `muted` = 1 WHERE `id` = ".escape($db, $id));
+        if ($db->affected_rows > 0) {
+            Message::create(Message::SUCCESS, "Alert has been muted.");
         }
         $db->commit();
 
@@ -35,7 +51,7 @@ class OverviewController extends TemplatedController {
         $q = $db->query("SELECT COUNT(`id`) AS `count` FROM `servers`") or fail($db->error);
         $total_count = $q->fetch_array()["count"];
 
-        $q = $db->query("SELECT COUNT(DISTINCT `server_id`) AS `count` FROM `alerts` WHERE `active` = 1");
+        $q = $db->query("SELECT COUNT(DISTINCT `server_id`) AS `count` FROM `alerts` WHERE `active` = 1 AND `muted` = 0");
         $alert_count = $q->fetch_array()["count"];
 
         return [
@@ -45,7 +61,7 @@ class OverviewController extends TemplatedController {
     }
 
     protected function countStamps(mysqli $db) {
-        $q = $db->query("SELECT COUNT(id) AS `stamp_total_count`, SUM(IF(DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW(), 1, 0)) AS `stamp_failed` FROM `stamps`") or fail($db->error);
+        $q = $db->query("SELECT COUNT(id) AS `stamp_total_count`, SUM(IF(DATE_ADD(`timestamp`, INTERVAL `alert_after` SECOND) < NOW() AND `status_id` = 1, 1, 0)) AS `stamp_failed` FROM `stamps`") or fail($db->error);
         $a = $q->fetch_array();
 
         return [

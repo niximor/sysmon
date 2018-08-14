@@ -28,7 +28,7 @@ class TwigEnv {
 
     public function countAlerts() {
         $db = connect();
-        $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1");
+        $q = $db->query("SELECT COUNT(id) AS `count` FROM `alerts` WHERE `active` = 1 AND `muted` = 0");
         $db->commit();
 
         return $q->fetch_array()["count"];

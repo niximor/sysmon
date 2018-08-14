@@ -74,7 +74,7 @@
         <tbody>
             {% for stamp in stamps %}
                 <tr{% if stamp.in_alert %} class="danger"{% endif %}>
-                    <td><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}"><span class="fa fa-search" style="vertical-align: text-top"></span> {{ stamp.stamp }}</a></td>
+                    <td><a href="{{ url_for(['StampsController', 'detail'], {'id': stamp.id}) }}"><span class="fa fa-search" style="vertical-align: text-top"></span>{% if stamp.status_id == 2 %} <span class="fa fa-pause" title="Suspended"></span>{% endif %} {{ stamp.stamp }}</a></td>
                     <td><a href="{{ url_for(['StampsController', 'index']) }}?host={{ stamp.hostname }}">{{ stamp.hostname }}</a></td>
                     <td>
                         {{ stamp.timestamp|datetime("Y-m-d G:i:s") }}
@@ -82,12 +82,14 @@
                     </td>
                     <td>
                         {{ stamp.alert_after|duration }}<br />
-                        {% if stamp.alert_after %}
+                        {% if stamp.alert_after and stamp.status_id == 1 %}
                         <div class="progress progress-small">
                             <div class="progress-bar progress-bar-striped {% if stamp.time_remaining_percent < 10 %}progress-bar-danger{% elseif stamp.time_remaining_percent < 50 %}progress-bar-warning{% else %}progress-bar-success{% endif %}" role="progressbar" aria-valuenow="{{ stamp.time_remaining_percent }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ stamp.time_remaining_percent }}%">
                                 <span class="sr-only">{{ stamp.time_remaining_percent }}% of time remaining</span>
                             </div>
                         </div>
+                        {% elseif stamp.status_id == 2 %}
+                        <span class="text-muted">Suspended</span>
                         {% endif %}
                     </td>
                 </tr>

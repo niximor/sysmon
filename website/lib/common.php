@@ -250,3 +250,15 @@ function pagination($rows, $limit, $page, $selfurl) {
         "next_url" => $next_url
     ];
 }
+
+function mqconn() {
+    $conn = new \PhpAmqpLib\Connection\AMQPStreamConnection(
+        $GLOBALS["config"]["rabbitmq-host"] ?? "localhost",
+        $GLOBALS["config"]["rabbitmq-port"] ?? 5672,
+        $GLOBALS["config"]["rabbitmq-user"] ?? "",
+        $GLOBALS["config"]["rabbitmq-password"] ?? "",
+        $GLOBALS["config"]["rabbitmq-vhost"] ?? "/"
+    );
+
+    return $conn;
+}

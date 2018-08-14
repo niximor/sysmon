@@ -23,7 +23,7 @@ class HostsController extends TemplatedController implements CronInterface {
             $direction = $_REQUEST["direction"];
         }
 
-        $q = $db->query("SELECT `s`.`id`, `s`.`hostname`, `s`.`distribution`, `s`.`version`, `s`.`kernel`, `s`.`ip`, `s`.`last_check`, COUNT(`a`.`id`) AS `alerts` FROM `servers` `s` LEFT JOIN `alerts` `a` ON (`a`.`server_id` = `s`.`id` AND `a`.`active`) GROUP BY `s`.`id` ORDER BY `s`.`".$order."` ".$direction) or fail($db->error);
+        $q = $db->query("SELECT `s`.`id`, `s`.`hostname`, `s`.`distribution`, `s`.`version`, `s`.`kernel`, `s`.`ip`, `s`.`last_check`, COUNT(`a`.`id`) AS `alerts` FROM `servers` `s` LEFT JOIN `alerts` `a` ON (`a`.`server_id` = `s`.`id` AND `a`.`active` = 1 AND `a`.`muted` = 0) GROUP BY `s`.`id` ORDER BY `s`.`".$order."` ".$direction) or fail($db->error);
 
         $now = new DateTime();
 

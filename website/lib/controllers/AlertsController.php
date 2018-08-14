@@ -66,8 +66,12 @@ class AlertsController implements CronInterface {
 
         $template = self::$twig_env->twig->createTemplate($GLOBALS["config"]["xmpp-template"]);
 
+        //$logger = new \Monolog\Logger("xmpp");
+        //$logger->pushHandler(new \Monolog\Handler\StreamHandler("php://stdout", \Monolog\Logger::DEBUG));
+
         $options = new Options($GLOBALS["config"]["xmpp-host"]);
-        $options->setUsername($GLOBALS["config"]["xmpp-user"])->setPassword($GLOBALS["config"]["xmpp-password"])->setTo($GLOBALS["config"]["xmpp-domain"]);
+        $options->setUsername($GLOBALS["config"]["xmpp-user"])->setPassword($GLOBALS["config"]["xmpp-password"])->setTo($GLOBALS["config"]["xmpp-domain"])
+            /*->setLogger($logger)*/;
 
         $client = new Client($options);
         $client->connect();
@@ -112,7 +116,7 @@ class AlertsController implements CronInterface {
             LEFT JOIN `servers` `s` ON (`a`.`server_id` = `s`.`id`)
             LEFT JOIN `checks` `ch` ON (`ch`.`id` = `a`.`check_id`)
             LEFT JOIN `stamps` `st` ON (`st`.`id` = `a`.`stamp_id`)
-            WHERE `sent` = 0 OR (`resend_interval` IS NOT NULL AND (`last_sent` IS NULL OR DATE_ADD(`last_sent`, INTERVAL `resend_interval` SECOND) <= NOW()))");
+            WHERE `sent` = 0 AND `muted` = 0 OR (`resend_interval` IS NOT NULL AND (`last_sent` IS NULL OR DATE_ADD(`last_sent`, INTERVAL `resend_interval` SECOND) <= NOW()))");
 
         $messages = [];
 
